@@ -710,6 +710,10 @@ async function loadAll(){
   inventory={};
   (invR.data||[]).forEach(r=>{if(!inventory[r.item_id])inventory[r.item_id]={};inventory[r.item_id][r.store_id]=r.qty;});
   minStock={};items.forEach(i=>{if(i.min_stock>0)minStock[i.id]=i.min_stock;});
+  // Load cat min stock from Supabase (shared across all devices/users)
+  const {data:cmsData}=await sb.from('wh_cat_min_stock').select('*');
+  catMinStock={};
+  if(cmsData)cmsData.forEach(r=>{catMinStock[r.cat_id]=r.min_stock;});
 }
 
 // ── NAV ──
@@ -1468,20 +1472,22 @@ function renderMinCats(){
   });
 }
 
-function saveCatMin(catId,sid){
+async function saveCatMin(catId,sid){
   const inp=document.getElementById(sid);
   if(!inp)return;
   const v=parseFloat(inp.value)||0;
+  const {error}=await sb.from('wh_cat_min_stock').upsert({cat_id:catId,min_stock:v,updated_at:new Date().toISOString()},{onConflict:'cat_id'});
+  if(error){toast('❌ فشل الحفظ: '+error.message);return;}
   catMinStock[catId]=v;
-  try{localStorage.setItem('krno_cat_min',JSON.stringify(catMinStock));}catch(e){}
   renderMinCats();
   renderDash();
   toast('✅ تم حفظ الحد الأدنى للصنف');
 }
 
-function clearCatMin(catId,sid){
+async function clearCatMin(catId,sid){
+  const {error}=await sb.from('wh_cat_min_stock').delete().eq('cat_id',catId);
+  if(error){toast('❌ فشل الحذف: '+error.message);return;}
   delete catMinStock[catId];
-  try{localStorage.setItem('krno_cat_min',JSON.stringify(catMinStock));}catch(e){}
   const inp=document.getElementById(sid);
   if(inp)inp.value='0';
   renderMinCats();
