@@ -1003,7 +1003,32 @@ function renderToday(){
 }
 function mvH(m){
   const isNew=m.move_date===todayStr();
-  return `<div class="mcard"><div class="mbadge ${m.type}">${m.type==='in'?'📦':'🔄'}</div><div class="mbody"><div class="mnm">${m.item_name||''}${(CU?.role==='owner'||CU?.role==='admin')&&isNew&&m.type==='in'?'<span class="ntag">جديد</span>':''}</div><div class="mmeta">${m.cat_name||''} · ${storeMap[m.store_id]||''} · ${m.move_time||''}${m.note?' · '+m.note:''}</div>${m.supplier?`<div class="msup">🏢 ${m.supplier}</div>`:''}</div><div class="mqcol"><div class="mq ${m.type}">${m.type==='in'?'+':'-'}${m.qty.toLocaleString()}</div><div style="font-size:10px;color:var(--t3);font-weight:600">${m.unit}</div></div></div>`;
+  const isAdmin=CU?.role==='admin';
+  const adminBtns=isAdmin
+    ?('<div style="display:flex;gap:5px;margin-top:6px">'
+      +'<button data-mid="'+m.id+'" onclick="editMovement(this.dataset.mid)" style="background:var(--gold-dim);border:1px solid var(--border3);color:var(--gold);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">✏️ تعديل</button>'
+      +'<button data-mid="'+m.id+'" data-name="'+(m.item_name||'').replace(/"/g,'')+'" data-qty="'+m.qty+'" onclick="deleteMovement(this.dataset.mid,this.dataset.name,this.dataset.qty)" style="background:var(--red-dim);border:1px solid rgba(231,76,60,.3);color:var(--red);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">🗑 حذف</button>'
+      +'</div>')
+    :'';
+  const supHtml=m.supplier?'<div class="msup">🏢 '+m.supplier+'</div>':'';
+  return '<div class="mcard">'
+    +'<div class="mbadge '+m.type+'">'+(m.type==='in'?'📦':'🔄')+'</div>'
+    +'<div class="mbody">'
+      +'<div class="mnm">'+(m.item_name||'')
+        +((CU?.role==='owner'||CU?.role==='admin')&&isNew&&m.type==='in'?'<span class="ntag">جديد</span>':'')
+      +'</div>'
+      +'<div class="mmeta">'+(m.cat_name||'')+' · '+(storeMap[m.store_id]||'')+' · '+m.move_date+' · '+(m.move_time||'')
+        +(m.note?' · '+m.note:'')
+        +(m.created_by?' · <span style="color:var(--blue);font-weight:700">'+m.created_by+'</span>':'')
+      +'</div>'
+      +supHtml
+      +adminBtns
+    +'</div>'
+    +'<div class="mqcol">'
+      +'<div class="mq '+m.type+'">'+(m.type==='in'?'+':'-')+m.qty.toLocaleString()+'</div>'
+      +'<div style="font-size:10px;color:var(--t3);font-weight:600">'+m.unit+'</div>'
+    +'</div>'
+    +'</div>';
 }
 
 // ── ADD ──
@@ -1212,166 +1237,179 @@ function closeMod(){document.getElementById('mov').classList.remove('open');}
 //  PRINT REPORT
 // ══════════════════════════════════════════
 function printReport(){
-  const now=new Date();
-  const dateStr=now.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-  const timeStr=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
-  const grand=items.reduce((a,i)=>a+totItem(i.id),0);
-  const low=getLow();
+  var now=new Date();
+  var dateStr=now.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  var timeStr=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  var grand=items.reduce(function(a,i){return a+totItem(i.id);},0);
+  var low=getLow();
+  var lowCats=getLowCats();
+  var today=todayStr();
+  var todayMovs=movements.filter(function(m){return m.move_date===today&&m.type==='in';});
+  var todayTotal=todayMovs.reduce(function(a,m){return a+m.qty;},0);
 
-  const storeCols=stores.map(s=>`<th style="background:#1a2540;color:#fff;padding:9px 10px;text-align:center;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid #2a3a50;">${s.name}</th>`).join('');
-
-  const summaryHtml=`
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;">
-      <div style="background:#f8f9fc;border:2px solid #e2e6f0;border-top:3px solid #b8860b;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#1a2540;">${(grand/1000).toFixed(1)}</div>
-        <div style="font-size:11px;color:#b8860b;font-weight:700;margin-top:2px;">طن</div>
-        <div style="font-size:12px;color:#6b7c93;margin-top:5px;font-weight:600;">إجمالي المخزون</div>
-      </div>
-      <div style="background:#f8f9fc;border:2px solid #e2e6f0;border-top:3px solid #b8860b;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#1a2540;">${cats.length}</div>
-        <div style="font-size:11px;color:#b8860b;font-weight:700;margin-top:2px;">صنف</div>
-        <div style="font-size:12px;color:#6b7c93;margin-top:5px;font-weight:600;">عدد الأصناف</div>
-      </div>
-      <div style="background:#f8f9fc;border:2px solid #e2e6f0;border-top:3px solid #b8860b;border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:#1a2540;">${items.length}</div>
-        <div style="font-size:11px;color:#b8860b;font-weight:700;margin-top:2px;">خامة</div>
-        <div style="font-size:12px;color:#6b7c93;margin-top:5px;font-weight:600;">عدد الخامات</div>
-      </div>
-      <div style="background:#f8f9fc;border:2px solid ${low.length?'#e74c3c':'#27ae60'};border-top:3px solid ${low.length?'#e74c3c':'#27ae60'};border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:24px;font-weight:900;color:${low.length?'#e74c3c':'#27ae60'};">${low.length}</div>
-        <div style="font-size:11px;color:${low.length?'#e74c3c':'#27ae60'};font-weight:700;margin-top:2px;">${low.length?'تحذير':'ممتاز'}</div>
-        <div style="font-size:12px;color:#6b7c93;margin-top:5px;font-weight:600;">تحت الحد الأدنى</div>
-      </div>
-    </div>`;
-
-  let tablesHtml='';
-  cats.forEach((cat,ci)=>{
-    const catItems=items.filter(i=>i.cat_id===cat.id);
-    if(!catItems.length)return;
-    const catTotal=catItems.reduce((a,i)=>a+totItem(i.id),0);
-    const catNum=cat.name.split('-')[0]?.trim()||String(ci+1);
-    const catName=cat.name.replace(/^\d+\s*-\s*/,'');
-    const hasWarn=catItems.some(i=>{const mn=minStock[i.id]||0;return mn>0&&totItem(i.id)<mn;});
-
-    const rows=catItems.map((item,idx)=>{
-      const bal=inventory[item.id]||{};
-      const tot=Object.values(bal).reduce((a,v)=>a+v,0);
-      const mn=minStock[item.id]||0;
-      const isLow=mn>0&&tot<mn;
-      const rowBg=idx%2===0?'#ffffff':'#f8f9fc';
-      const storeCells=stores.map(s=>{
-        const q=bal[s.id]||0;
-        return `<td style="padding:8px 10px;text-align:center;font-size:12px;font-weight:${q?'700':'400'};color:${q?'#1a2540':'#ccc'};border:1px solid #eef0f5;">${q?q.toLocaleString('ar-EG'):'—'}</td>`;
-      }).join('');
-      const warnBadge=isLow?`<span style="background:#fdecea;color:#e74c3c;border:1px solid #f5c6cb;border-radius:4px;font-size:10px;font-weight:700;padding:1px 6px;margin-right:4px;">منخفض</span>`:'';
-      return `<tr style="background:${isLow?'#fffaf9':rowBg};">
-        <td style="padding:8px 13px;font-size:13px;font-weight:600;color:${isLow?'#e74c3c':'#1a2540'};border:1px solid #eef0f5;direction:rtl;">${warnBadge}${item.name}</td>
-        ${storeCells}
-        <td style="padding:8px 10px;text-align:center;font-size:13px;font-weight:800;color:${isLow?'#e74c3c':'#b8860b'};border:1px solid #eef0f5;">${tot.toLocaleString('ar-EG')}</td>
-        <td style="padding:8px 10px;text-align:center;font-size:12px;color:#888;border:1px solid #eef0f5;">${mn?mn.toLocaleString('ar-EG'):'—'}</td>
-      </tr>`;
-    }).join('');
-
-    const storeTotals=stores.map(s=>{
-      const t=catItems.reduce((a,i)=>a+((inventory[i.id]||{})[s.id]||0),0);
-      return `<td style="padding:8px 10px;text-align:center;font-size:12px;font-weight:800;color:#1a2540;background:#edf0f8;border:1px solid #d8dce8;">${t?t.toLocaleString('ar-EG'):'—'}</td>`;
-    }).join('');
-
-    tablesHtml+=`
-      <div style="margin-bottom:22px;page-break-inside:avoid;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px;">
-          <div style="width:32px;height:32px;border-radius:8px;background:#1a2540;color:#d4a843;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex-shrink:0;">${catNum}</div>
-          <span style="font-size:15px;font-weight:800;color:#1a2540;">${catName}</span>
-          ${hasWarn?'<span style="background:#fdecea;color:#e74c3c;border:1px solid #f5c6cb;border-radius:5px;font-size:10px;font-weight:700;padding:2px 8px;">⚠ خامات منخفضة</span>':''}
-          <div style="margin-right:auto;background:#eef6e4;border:1px solid #b8d898;border-radius:6px;padding:4px 13px;font-size:13px;font-weight:800;color:#3a6020;">${catTotal.toLocaleString('ar-EG')} كجم</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;direction:rtl;">
-          <thead>
-            <tr>
-              <th style="background:#1a2540;color:#fff;padding:9px 13px;text-align:right;font-size:12px;font-weight:700;border:1px solid #2a3a50;min-width:200px;">اسم الخامة</th>
-              ${storeCols}
-              <th style="background:#1a2540;color:#d4a843;padding:9px 10px;text-align:center;font-size:12px;font-weight:700;border:1px solid #2a3a50;">الإجمالي</th>
-              <th style="background:#1a2540;color:#888;padding:9px 10px;text-align:center;font-size:11px;font-weight:600;border:1px solid #2a3a50;">الحد الأدنى</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-            <tr style="background:#edf0f8;">
-              <td style="padding:9px 13px;font-size:13px;font-weight:800;color:#1a2540;border:1px solid #d0d5e8;">إجمالي الصنف</td>
-              ${storeTotals}
-              <td style="padding:9px 10px;text-align:center;font-size:14px;font-weight:900;color:#b8860b;background:#f0f4e0;border:1px solid #d0d5e8;">${catTotal.toLocaleString('ar-EG')}</td>
-              <td style="border:1px solid #d0d5e8;"></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>`;
-  });
-
-  const grandTotalsRow=stores.map(s=>{
-    const t=items.reduce((a,i)=>a+((inventory[i.id]||{})[s.id]||0),0);
-    return `<td style="padding:11px 10px;text-align:center;font-size:14px;font-weight:800;color:#fff;border:1px solid #2a3a50;">${t.toLocaleString('ar-EG')}</td>`;
+  // ── Store columns ──
+  var storeThs=stores.map(function(s){
+    return '<th style="background:#1a2540;color:#fff;padding:2px 4px;text-align:center;font-size:9px;font-weight:700;border:1px solid #334;white-space:nowrap">'+s.name+'</th>';
   }).join('');
 
-  const lowAlert=low.length?`
-    <div style="background:#fdecea;border:1.5px solid #f5c6cb;border-right:4px solid #e74c3c;border-radius:8px;padding:13px 16px;margin-bottom:20px;">
-      <div style="font-size:13px;font-weight:800;color:#c0392b;margin-bottom:7px;">⚠️ ${low.length} خامات تحت الحد الأدنى</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">${low.map(i=>`<span style="background:#fff;border:1px solid #f5c6cb;border-radius:4px;padding:3px 10px;font-size:12px;font-weight:700;color:#c0392b;">${i.name} — ${totItem(i.id).toLocaleString()} كجم</span>`).join('')}</div>
-    </div>`:'';
+  // ── Summary cards ──
+  var summaryHtml=
+    '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:8px">'
+    +'<div style="background:#f8f9fc;border:1px solid #bbbccc;border-top:3px solid #b8860b;border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:18px;font-weight:900;color:#1a2540">'+(grand/1000).toFixed(1)+'</div>'
+      +'<div style="font-size:9px;color:#b8860b;font-weight:700">طن · إجمالي المخزون</div>'
+    +'</div>'
+    +'<div style="background:#f8f9fc;border:1px solid #bbbccc;border-top:3px solid #b8860b;border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:18px;font-weight:900;color:#1a2540">'+cats.length+'</div>'
+      +'<div style="font-size:9px;color:#b8860b;font-weight:700">صنف · عدد الأصناف</div>'
+    +'</div>'
+    +'<div style="background:#f8f9fc;border:1px solid #bbbccc;border-top:3px solid #b8860b;border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:18px;font-weight:900;color:#1a2540">'+items.length+'</div>'
+      +'<div style="font-size:9px;color:#b8860b;font-weight:700">خامة · عدد الخامات</div>'
+    +'</div>'
+    +'<div style="background:#f8f9fc;border:1px solid '+(( low.length+lowCats.length)?'#e74c3c':'#27ae60')+';border-top:3px solid '+((low.length+lowCats.length)?'#e74c3c':'#27ae60')+';border-radius:6px;padding:8px;text-align:center">'
+      +'<div style="font-size:18px;font-weight:900;color:'+((low.length+lowCats.length)?'#e74c3c':'#27ae60')+'">'+(low.length+lowCats.length)+'</div>'
+      +'<div style="font-size:9px;color:'+((low.length+lowCats.length)?'#e74c3c':'#27ae60')+';font-weight:700">'+((low.length+lowCats.length)?'تحذير':'ممتاز')+'</div>'
+    +'</div>'
+    +'</div>';
 
-  const html=`<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta charset="UTF-8">
-<title>تقرير أرصدة المخازن — مخازن خامات كرنو</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Cairo',sans-serif;background:#fff;color:#1a2540;direction:rtl;}
-@page{size:A4 landscape;margin:14mm;}
-@media print{.no-print{display:none!important;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}
-</style>
-</head>
-<body>
-<div class="no-print" style="position:fixed;top:14px;left:14px;display:flex;gap:8px;z-index:100;">
-  <button onclick="window.print()" style="background:#1a2540;color:#fff;border:none;border-radius:8px;padding:11px 22px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);">🖨️ طباعة / حفظ PDF</button>
-  <button onclick="window.close()" style="background:#f0f2f8;color:#1a2540;border:1px solid #dde2ec;border-radius:8px;padding:11px 18px;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;">✕ إغلاق</button>
-</div>
-<div style="padding:22px 26px;">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding-bottom:16px;border-bottom:3px solid #1a2540;">
-    <div>
-      <div style="font-size:24px;font-weight:900;color:#1a2540;">تقرير أرصدة المخازن</div>
-      <div style="font-size:14px;color:#6b7c93;margin-top:4px;font-weight:600;">مخازن خامات كرنو</div>
-    </div>
-    <div style="text-align:left;">
-      <div style="font-size:14px;font-weight:700;color:#1a2540;">${dateStr}</div>
-      <div style="font-size:12px;color:#6b7c93;margin-top:3px;">الساعة ${timeStr}</div>
-      <div style="font-size:12px;color:#b8860b;font-weight:700;margin-top:3px;">أُعد بواسطة: ${CU?.full_name||'—'}</div>
-    </div>
-  </div>
-  ${summaryHtml}
-  ${lowAlert}
-  ${tablesHtml}
-  <table style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;direction:rtl;margin-top:8px;">
-    <tr style="background:#1a2540;">
-      <td style="padding:13px 16px;font-size:15px;font-weight:900;color:#d4a843;border:1px solid #2a3a50;">الإجمالي الكلي لجميع الأصناف</td>
-      ${grandTotalsRow}
-      <td style="padding:13px 10px;text-align:center;font-size:16px;font-weight:900;color:#d4a843;border:1px solid #2a3a50;">${grand.toLocaleString('ar-EG')}</td>
-      <td style="border:1px solid #2a3a50;"></td>
-    </tr>
-  </table>
-  <div style="margin-top:18px;padding-top:12px;border-top:1px solid #e2e6f0;display:flex;justify-content:space-between;font-size:11px;color:#aab;">
-    <span>مخازن خامات كرنو — نظام إدارة المخزن</span>
-    <span>تاريخ الطباعة: ${dateStr} — ${timeStr}</span>
-  </div>
-</div>
-</body>
-</html>`;
+  // ── Balances table (one row per item, cols per store) ──
+  var balRows='';
+  cats.forEach(function(cat,ci){
+    var catItems=items.filter(function(i){return i.cat_id===cat.id;});
+    if(!catItems.length)return;
+    var catTotal=catItems.reduce(function(a,i){return a+totItem(i.id);},0);
+    var catNum=cat.name.split('-')[0]?cat.name.split('-')[0].trim():String(ci+1);
+    var catName=cat.name.replace(/^\d+\s*-\s*/,'');
+    // Category header row
+    balRows+='<tr style="background:#1a2540">'
+      +'<td colspan="'+(stores.length+2)+'" style="padding:2px 6px;color:#d4a843;font-size:9px;font-weight:800;border:1px solid #223">'
+        +String(ci+1)+'. '+catName
+        +' <span style="color:#aaa;font-size:8px;font-weight:400">('+catItems.length+' خامة · '+catTotal.toLocaleString('ar-EG')+' كجم)</span>'
+      +'</td>'
+    +'</tr>';
+    // Item rows
+    catItems.forEach(function(item,idx){
+      var bal=inventory[item.id]||{};
+      var tot=Object.values(bal).reduce(function(a,v){return a+v;},0);
+      var mn=minStock[item.id]||0;
+      var isLow=mn>0&&tot<mn;
+      var bg=idx%2===0?'#ffffff':'#f9f9fc';
+      var tds=stores.map(function(s){
+        var q=bal[s.id]||0;
+        return '<td style="padding:2px 4px;text-align:center;font-size:9px;font-weight:'+(q?'700':'400')+';color:'+(q?'#1a2540':'#ccc')+';border:1px solid #c8c8d8">'+(q?q.toLocaleString('ar-EG'):'—')+'</td>';
+      }).join('');
+      balRows+='<tr style="background:'+(isLow?'#fff5f5':bg)+'">'
+        +'<td style="padding:5px 10px;font-size:10px;font-weight:600;color:'+(isLow?'#e74c3c':'#1a2540')+';border:1px solid #c8c8d8;text-align:right">'+(isLow?'⚠ ':'')+item.name+'</td>'
+        +tds
+        +'<td style="padding:2px 4px;text-align:center;font-size:9px;font-weight:800;color:'+(isLow?'#e74c3c':'#b8860b')+';border:1px solid #c8c8d8">'+tot.toLocaleString('ar-EG')+'</td>'
+      +'</tr>';
+    });
+    // Category total row
+    var catTotTds=stores.map(function(s){
+      var t=catItems.reduce(function(a,i){return a+((inventory[i.id]||{})[s.id]||0);},0);
+      return '<td style="padding:2px 4px;text-align:center;font-size:9px;font-weight:800;color:#1a2540;background:#edf0f8;border:1px solid #aab">'+( t?t.toLocaleString('ar-EG'):'—')+'</td>';
+    }).join('');
+    balRows+='<tr style="background:#edf0f8">'
+      +'<td style="padding:2px 6px;font-size:9px;font-weight:800;color:#1a2540;border:1px solid #bbbccc;text-align:right">إجمالي الصنف</td>'
+      +catTotTds
+      +'<td style="padding:2px 4px;text-align:center;font-size:10px;font-weight:900;color:#b8860b;background:#f0f4e0;border:1px solid #bbbccc">'+catTotal.toLocaleString('ar-EG')+'</td>'
+    +'</tr>';
+  });
 
-  const win=window.open('','_blank','width=1200,height=800');
-  if(!win){toast('⚠️ يرجى السماح بالنوافذ المنبثقة في المتصفح');return;}
+  // Grand total row
+  var grandTotTds=stores.map(function(s){
+    var t=items.reduce(function(a,i){return a+((inventory[i.id]||{})[s.id]||0);},0);
+    return '<td style="padding:3px 4px;text-align:center;font-size:9px;font-weight:800;color:#fff;border:1px solid #223">'+t.toLocaleString('ar-EG')+'</td>';
+  }).join('');
+
+  // ── Today inbound table ──
+  var todayRows=todayMovs.length
+    ?todayMovs.map(function(m,idx){
+        var bg=idx%2===0?'#fff':'#f9f9fc';
+        return '<tr style="background:'+bg+'">'
+          +'<td style="padding:2px 6px;font-size:9px;font-weight:700;color:#1a2540;border:1px solid #c8c8d8;text-align:right">'+(m.item_name||'')+'</td>'
+          +'<td style="padding:5px 8px;font-size:10px;color:#555;border:1px solid #c8c8d8;text-align:right">'+(m.cat_name||'')+'</td>'
+          +'<td style="padding:5px 8px;font-size:10px;color:#555;border:1px solid #c8c8d8;text-align:right">'+(storeMap[m.store_id]||'')+'</td>'
+          +'<td style="padding:5px 8px;font-size:10px;color:#3498db;border:1px solid #c8c8d8;text-align:right">'+(m.supplier||'—')+'</td>'
+          +'<td style="padding:5px 8px;font-size:11px;font-weight:800;color:#27ae60;border:1px solid #c8c8d8;text-align:center">+'+m.qty.toLocaleString('ar-EG')+' '+m.unit+'</td>'
+          +'<td style="padding:5px 8px;font-size:10px;color:#888;border:1px solid #c8c8d8;text-align:center">'+(m.move_time||'')+'</td>'
+        +'</tr>';
+      }).join('')
+    :'<tr><td colspan="6" style="padding:12px;text-align:center;color:#aaa;font-size:11px">لا توجد واردات اليوم</td></tr>';
+
+  var html='<!DOCTYPE html><html lang="ar" dir="rtl"><head>'
+    +'<meta charset="UTF-8">'
+    +'<title>تقرير أرصدة المخازن — '+dateStr+'</title>'
+    +'<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">'
+    +'<style>'
+    +'*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Cairo,sans-serif;background:#fff;color:#1a2540;direction:rtl;font-size:9px;line-height:1.1}'
+    +'table{border-collapse:collapse;width:100%}'
+    +'@page{size:A4 portrait;margin:5mm}'
+    +'@media print{.np{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
+    +'</style>'
+    +'</head><body>'
+    +'<div class="np" style="position:fixed;top:10px;left:10px;display:flex;gap:8px;z-index:100">'
+    +'<button onclick="window.print()" style="background:#1a2540;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer">🖨️ طباعة / PDF</button>'
+    +'<button onclick="window.close()" style="background:#f0f2f8;color:#1a2540;border:1px solid #bbbccc;border-radius:8px;padding:9px 14px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer">✕ إغلاق</button>'
+    +'</div>'
+    +'<div style="padding:8px 12px">'
+
+    // Header
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid #1a2540">'
+      +'<div>'
+        +'<div style="font-size:16px;font-weight:900;color:#1a2540">تقرير أرصدة المخازن — مخازن خامات كرنو</div>'
+      +'</div>'
+      +'<div style="text-align:left;font-size:10px;color:#6b7c93">'+dateStr+' · '+timeStr+' · '+(CU?CU.full_name:'')+'</div>'
+    +'</div>'
+
+    // Summary
+    +summaryHtml
+
+    // Balances table
+    +'<div style="font-size:12px;font-weight:800;color:#1a2540;margin-bottom:5px">📦 أرصدة المخازن</div>'
+    +'<table style="border:1px solid #aab;margin-bottom:12px">'
+      +'<thead><tr>'
+        +'<th style="background:#1a2540;color:#fff;padding:3px 8px;text-align:right;font-size:9px;font-weight:700;border:1px solid #223;min-width:110px">الخامة</th>'
+        +storeThs
+        +'<th style="background:#1a2540;color:#d4a843;padding:3px 6px;text-align:center;font-size:9px;font-weight:700;border:1px solid #223">الإجمالي</th>'
+      +'</tr></thead>'
+      +'<tbody>'+balRows+'</tbody>'
+      +'<tfoot><tr style="background:#1a2540">'
+        +'<td style="padding:6px 10px;font-size:11px;font-weight:900;color:#d4a843;border:1px solid #223;text-align:right">الإجمالي الكلي</td>'
+        +grandTotTds
+        +'<td style="padding:6px 8px;text-align:center;font-size:12px;font-weight:900;color:#d4a843;border:1px solid #223">'+grand.toLocaleString('ar-EG')+'</td>'
+      +'</tr></tfoot>'
+    +'</table>'
+
+    // Today inbound
+    +'<div style="font-size:12px;font-weight:800;color:#15803d;margin-bottom:5px">📥 الواردات اليوم — '+dateStr+' ('+todayTotal.toLocaleString('ar-EG')+' كجم)</div>'
+    +'<table style="border:1px solid #c8c8d8">'
+      +'<thead><tr style="background:#15803d">'
+        +'<th style="padding:6px 10px;color:#fff;font-size:10px;font-weight:700;border:1px solid #155025;text-align:right">الخامة</th>'
+        +'<th style="padding:6px 8px;color:#fff;font-size:10px;font-weight:700;border:1px solid #155025;text-align:right">الصنف</th>'
+        +'<th style="padding:6px 8px;color:#fff;font-size:10px;font-weight:700;border:1px solid #155025;text-align:right">المخزن</th>'
+        +'<th style="padding:6px 8px;color:#fff;font-size:10px;font-weight:700;border:1px solid #155025;text-align:right">المورد</th>'
+        +'<th style="padding:6px 8px;color:#d4ffd4;font-size:10px;font-weight:700;border:1px solid #155025;text-align:center">الكمية</th>'
+        +'<th style="padding:6px 8px;color:#aaa;font-size:10px;font-weight:700;border:1px solid #155025;text-align:center">الوقت</th>'
+      +'</tr></thead>'
+      +'<tbody>'+todayRows+'</tbody>'
+      +(todayMovs.length?'<tfoot><tr style="background:#f0fdf4"><td colspan="4" style="padding:5px 10px;font-size:10px;font-weight:800;color:#15803d;border:1px solid #c8c8d8;text-align:right">الإجمالي ('+todayMovs.length+' عملية)</td><td style="padding:5px 8px;text-align:center;font-size:11px;font-weight:900;color:#15803d;border:1px solid #c8c8d8">+'+todayTotal.toLocaleString('ar-EG')+' كجم</td><td style="border:1px solid #c8c8d8"></td></tr></tfoot>':'')
+    +'</table>'
+
+    // Footer
+    +'<div style="margin-top:8px;padding-top:6px;border-top:1px solid #eee;display:flex;justify-content:space-between;font-size:9px;color:#aaa">'
+      +'<span>مخازن خامات كرنو — نظام إدارة المخزن</span>'
+      +'<span>'+dateStr+' — '+timeStr+'</span>'
+    +'</div>'
+    +'</div></body></html>';
+
+  var win=window.open('','_blank','width=1200,height=800');
+  if(!win){toast('⚠️ السماح بالنوافذ المنبثقة في المتصفح');return;}
   win.document.write(html);
   win.document.close();
-  setTimeout(()=>{win.focus();},300);
+  setTimeout(function(){win.focus();},300);
 }
 
 
@@ -1466,12 +1504,12 @@ function printToday(){
   var ti=im.reduce(function(a,m){return a+m.qty;},0);
   var to2=om.reduce(function(a,m){return a+m.qty;},0);
   var thead='<thead><tr style="background:#1a2540">'
-    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #334">الخامة</th>'
-    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #334">الصنف</th>'
-    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #334">المخزن</th>'
-    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #334">المورد</th>'
-    +'<th style="padding:8px 10px;color:#d4a843;font-size:11px;font-weight:700;text-align:center;border:1px solid #334">الكمية</th>'
-    +'<th style="padding:8px 10px;color:#aaa;font-size:11px;font-weight:700;text-align:center;border:1px solid #334">الوقت</th>'
+    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #223">الخامة</th>'
+    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #223">الصنف</th>'
+    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #223">المخزن</th>'
+    +'<th style="padding:8px 10px;color:#fff;font-size:11px;font-weight:700;text-align:right;border:1px solid #223">المورد</th>'
+    +'<th style="padding:8px 10px;color:#d4a843;font-size:11px;font-weight:700;text-align:center;border:1px solid #223">الكمية</th>'
+    +'<th style="padding:8px 10px;color:#aaa;font-size:11px;font-weight:700;text-align:center;border:1px solid #223">الوقت</th>'
     +'</tr></thead>';
   function mvRow(m,clr){
     var sign=clr==='green'?'+':'-';
@@ -1496,7 +1534,7 @@ function printToday(){
     +'</head><body>'
     +'<div class="np" style="position:fixed;top:12px;left:12px;display:flex;gap:8px;z-index:100">'
     +'<button onclick="window.print()" style="background:#1a2540;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">🖨️ طباعة / PDF</button>'
-    +'<button onclick="window.close()" style="background:#f0f2f8;color:#1a2540;border:1px solid #dde2ec;border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">✕ إغلاق</button>'
+    +'<button onclick="window.close()" style="background:#f0f2f8;color:#1a2540;border:1px solid #bbbccc2ec;border-radius:8px;padding:10px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">✕ إغلاق</button>'
     +'</div>'
     +'<div style="padding:16px 20px">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1a2540">'
@@ -1536,6 +1574,86 @@ function printToday(){
   win.document.close();
   setTimeout(function(){win.focus();},300);
 }
+
+// ══════════════════════════════════════════
+//  ADMIN: EDIT & DELETE MOVEMENTS
+// ══════════════════════════════════════════
+function editMovement(mid){
+  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(!mid||mid==='undefined'){toast('⚠️ أعد تحميل الصفحة');return;}
+  const m=movements.find(x=>x.id==mid);
+  if(!m){toast('⚠️ لم يتم إيجاد الحركة');return;}
+  openMod('✏️ تعديل الحركة',
+    '<div style="font-size:12px;color:var(--t2);margin-bottom:12px">'+( m.item_name||'')+' · '+(m.type==='in'?'إضافة':'صرف')+' · '+m.move_date+'</div>'
+    +'<div class="flbl">الكمية</div><input type="number" class="fi2" id="editQty" value="'+m.qty+'" min="0" style="margin-bottom:10px"/>'
+    +'<div class="flbl">التاريخ</div><input type="date" class="fi2" id="editDate" value="'+m.move_date+'" style="margin-bottom:10px;color-scheme:dark"/>'
+    +'<div class="flbl">اسم المورد</div><input type="text" class="fi2" id="editSup" value="'+(m.supplier||'')+'" placeholder="اسم المورد" style="margin-bottom:10px"/>'
+    +'<div class="flbl">ملاحظة</div><input type="text" class="fi2" id="editNote" value="'+(m.note||'')+'" placeholder="ملاحظة" style="margin-bottom:0"/>',
+    [
+      {l:'إلغاء',c:'bcancel',f:'closeMod()'},
+      {l:'حفظ التعديل',c:'bconfirm',f:'saveEditMovement('+mid+')'}
+    ]
+  );
+}
+
+async function saveEditMovement(mid){
+  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  const newQty=parseFloat(document.getElementById('editQty').value)||0;
+  const newDate=document.getElementById('editDate').value||todayStr();
+  const newSup=document.getElementById('editSup').value.trim();
+  const newNote=document.getElementById('editNote').value.trim();
+  if(!newQty||newQty<=0){toast('⚠️ أدخل كمية صحيحة');return;}
+  const m=movements.find(x=>x.id==mid);
+  if(!m){toast('⚠️ لم يتم إيجاد الحركة');closeMod();return;}
+  const {error}=await sb.from('wh_movements').update({qty:newQty,move_date:newDate,supplier:newSup,note:newNote}).eq('id',mid);
+  if(error){toast('❌ فشل التعديل: '+error.message);return;}
+  // Adjust inventory
+  const iid=m.item_id;const sid=m.store_id;
+  const oldQkg=m.unit==='طن'?m.qty*1000:m.qty;
+  const newQkg=m.unit==='طن'?newQty*1000:newQty;
+  if(!inventory[iid])inventory[iid]={};
+  const cur=inventory[iid][sid]||0;
+  const adjusted=m.type==='in'?(cur-oldQkg+newQkg):(cur+oldQkg-newQkg);
+  const finalQty=Math.max(0,adjusted);
+  inventory[iid][sid]=finalQty;
+  await sb.from('wh_inventory').upsert({item_id:iid,store_id:sid,qty:finalQty},{onConflict:'item_id,store_id'});
+  m.qty=newQty;m.move_date=newDate;m.supplier=newSup;m.note=newNote;
+  closeMod();
+  toast('✅ تم تعديل الحركة بنجاح');
+  renderHistory();renderDash();renderToday();
+}
+
+function deleteMovement(mid,itemName,qty){
+  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(!mid||mid==='undefined'){toast('⚠️ أعد تحميل الصفحة');return;}
+  openMod('🗑 حذف حركة',
+    '<div style="font-size:13px;color:var(--t2)">حذف حركة <b>'+itemName+'</b> ('+parseFloat(qty).toLocaleString()+' كجم)؟<br><span style="font-size:11px;color:var(--red);margin-top:6px;display:block">⚠️ سيتم عكس أثرها على الرصيد تلقائياً</span></div>',
+    [
+      {l:'إلغاء',c:'bcancel',f:'closeMod()'},
+      {l:'حذف',c:'bdel',f:'cfmDeleteMovement('+mid+')'}
+    ]
+  );
+}
+
+async function cfmDeleteMovement(mid){
+  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  const m=movements.find(x=>x.id==mid);
+  if(!m){closeMod();return;}
+  const {error}=await sb.from('wh_movements').delete().eq('id',mid);
+  if(error){toast('❌ فشل الحذف: '+error.message);return;}
+  const iid=m.item_id;const sid=m.store_id;
+  const qkg=m.unit==='طن'?m.qty*1000:m.qty;
+  if(!inventory[iid])inventory[iid]={};
+  const cur=inventory[iid][sid]||0;
+  const adjusted=m.type==='in'?Math.max(0,cur-qkg):cur+qkg;
+  inventory[iid][sid]=adjusted;
+  await sb.from('wh_inventory').upsert({item_id:iid,store_id:sid,qty:adjusted},{onConflict:'item_id,store_id'});
+  movements=movements.filter(x=>x.id!=mid);
+  closeMod();
+  toast('🗑 تم حذف الحركة وعكس أثرها');
+  renderHistory();renderDash();renderToday();
+}
+
 </script>
 </body>
 </html>
