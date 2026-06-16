@@ -688,6 +688,7 @@ async function doLogin(){
   renderDash();renderToday();renderHistory();
   if(isAdmin)renderAdminPwList();
   if(isStorekeeper){go('add');}else{go('dashboard');}
+  startAutoRefresh();
 }
 // Auto-restore session
 document.addEventListener('DOMContentLoaded',async function(){
@@ -705,6 +706,7 @@ document.addEventListener('DOMContentLoaded',async function(){
 });
 
 function doLogout(){
+  stopAutoRefresh();
   CU=null;
   document.getElementById('app').style.display='none';
   document.getElementById('ls').style.display='flex';
@@ -1691,6 +1693,63 @@ async function cfmDeleteMovement(mid){
   closeMod();
   toast('🗑 تم حذف الحركة وعكس أثرها');
   renderHistory();renderDash();renderToday();
+}
+
+
+// ══════════════════════════════════════════
+//  AUTO REFRESH - تحديث تلقائي كل دقيقة
+// ══════════════════════════════════════════
+let _refreshInterval = null;
+
+function startAutoRefresh(){
+  stopAutoRefresh();
+  _refreshInterval = setInterval(async function(){
+    // Only refresh if user is logged in
+    if(!CU) return;
+    try{
+      // Get latest movements
+      const {data:newMovs} = await sb.from('wh_movements').select('*').order('created_at',{ascending:false});
+      if(newMovs){
+        const oldCount = movements.length;
+        movements = newMovs;
+        // Get latest inventory
+        const {data:invData} = await sb.from('wh_inventory').select('*');
+        if(invData){
+          inventory = {};
+          invData.forEach(r=>{
+            if(!inventory[r.item_id])inventory[r.item_id]={};
+            inventory[r.item_id][r.store_id]=r.qty;
+          });
+        }
+        // Get latest catMinStock
+        const {data:cmsData} = await sb.from('wh_cat_min_stock').select('*');
+        if(cmsData){
+          catMinStock={};
+          cmsData.forEach(r=>{catMinStock[r.cat_id]=r.min_stock;});
+        }
+        // Refresh current screen
+        const activeScr = document.querySelector('.scr.active');
+        if(activeScr){
+          const id = activeScr.id;
+          if(id==='scr-dashboard') renderDash();
+          else if(id==='scr-today') renderToday();
+          else if(id==='scr-history') renderHistory();
+        }
+        // Show toast if new movements arrived
+        if(newMovs.length > oldCount){
+          const diff = newMovs.length - oldCount;
+          toast('🔄 '+diff+' حركة جديدة وردت');
+        }
+      }
+    }catch(e){console.log('Refresh error:',e);}
+  }, 60000); // every 60 seconds
+}
+
+function stopAutoRefresh(){
+  if(_refreshInterval){
+    clearInterval(_refreshInterval);
+    _refreshInterval = null;
+  }
 }
 
 </script>
