@@ -487,6 +487,8 @@ select.fi2{appearance:none;cursor:pointer;}
         <input type="text" class="fi2 sup-fld" id="mSup" placeholder="اسم المورد (اختياري)"/>
         <div class="flbl">ملاحظة</div>
         <input type="text" class="fi2" id="mNote" placeholder="ملاحظة اختيارية..."/>
+        <div class="flbl">التاريخ</div>
+        <input type="date" class="fi2" id="mDate" style="margin-bottom:10px;color-scheme:dark"/>
         <button class="sbtn in" id="subBtn" onclick="submitMov()">✓ تسجيل الإضافة</button>
       </div>
     </div>
@@ -642,6 +644,7 @@ async function doLogin(){
   if(error||!data){document.getElementById('errMsg').style.display='block';return;}
   CU=data;
   document.getElementById('ls').style.display='none';
+  window._savedCU=null;
   document.getElementById('app').style.cssText='display:flex;flex-direction:column;';
   document.getElementById('topDate').textContent=new Date().toLocaleDateString('ar-EG',{weekday:'long',month:'long',day:'numeric'});
   document.getElementById('uAv').textContent=data.full_name.charAt(0);
@@ -679,12 +682,28 @@ async function doLogin(){
     const apw=document.getElementById('adminPwSection');
     if(apw)apw.style.display='';
   }
+  try{sessionStorage.setItem('krno_cu',JSON.stringify(CU));}catch(e){}
   await loadAll();
   buildAddForm();buildHistFilter();buildStoreTabs();
   renderDash();renderToday();renderHistory();
   if(isAdmin)renderAdminPwList();
   if(isStorekeeper){go('add');}else{go('dashboard');}
 }
+// Auto-restore session
+document.addEventListener('DOMContentLoaded',async function(){
+  if(window._savedCU){
+    const cu=window._savedCU;
+    // Verify user still exists
+    const {data}=await sb.from('wh_users').select('*').eq('id',cu.id).eq('password',cu.password).single();
+    if(data){
+      // Re-login silently
+      document.getElementById('lgUser').value=data.username;
+      document.getElementById('lgPass').value=data.password;
+      doLogin();
+    }
+  }
+});
+
 function doLogout(){
   CU=null;
   document.getElementById('app').style.display='none';
@@ -729,6 +748,7 @@ function go(s){
   if(s==='today')renderToday();
   if(s==='history')renderHistory();
   if(s==='admin')ba();
+  if(s==='add'){const da=document.getElementById('mDate');if(da)da.value=todayStr();}
 }
 
 // ── DASHBOARD ──
@@ -1023,7 +1043,7 @@ function mvH(m){
       +'</div>'
       +'<div class="mmeta">'+(m.cat_name||'')+' · '+(storeMap[m.store_id]||'')+' · '+m.move_date+' · '+(m.move_time||'')
         +(m.note?' · '+m.note:'')
-        +(m.created_by?' · <span style="color:var(--blue);font-weight:700">'+m.created_by+'</span>':'')
+        +(m.created_by?' · <span style="color:var(--cyan,#38c9c9);font-weight:700">👤 '+m.created_by+'</span>':'')
       +'</div>'
       +supHtml
       +adminBtns
@@ -1063,6 +1083,7 @@ async function submitMov(){
   const unit=document.getElementById('mUnit').value;
   const note=document.getElementById('mNote').value.trim();
   const sup=document.getElementById('mSup').value.trim();
+  const selDate=document.getElementById('mDate')?.value||todayStr();
   if(!catId||!itemId||!storeId||!qty||qty<=0){toast('⚠️ أكمل جميع الحقول المطلوبة');return;}
   const qkg=unit==='طن'?qty*1000:qty;
   const curQty=(inventory[itemId]||{})[storeId]||0;
@@ -1073,11 +1094,13 @@ async function submitMov(){
   const now=new Date();const timeStr=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
   const {error:e1}=await sb.from('wh_inventory').upsert({item_id:itemId,store_id:storeId,qty:newQty},{onConflict:'item_id,store_id'});
   if(e1){toast('❌ خطأ في تحديث المخزون');btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';return;}
-  const {error:e2}=await sb.from('wh_movements').insert({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,store_name:store?.name||'',qty,unit,note,supplier:movType==='in'?sup:'',created_by:CU?.username||'',move_date:todayStr(),move_time:timeStr});
+  const {data:newMov,error:e2}=await sb.from('wh_movements').insert({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,store_name:store?.name||'',qty,unit,note,supplier:movType==='in'?sup:'',created_by:CU?.full_name||CU?.username||'',move_date:selDate,move_time:timeStr}).select().single();
   if(e2){toast('❌ خطأ في تسجيل الحركة');btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';return;}
   if(!inventory[itemId])inventory[itemId]={};inventory[itemId][storeId]=newQty;
-  movements.unshift({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,qty,unit,note,supplier:movType==='in'?sup:'',move_date:todayStr(),move_time:timeStr});
+  if(newMov)movements.unshift(newMov);
+  else movements.unshift({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,qty,unit,note,supplier:movType==='in'?sup:'',created_by:CU?.full_name||CU?.username||'',move_date:selDate,move_time:timeStr});
   btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';
+  const md2=document.getElementById('mDate');if(md2)md2.value=todayStr();
   ['mCat','mItem','mStore','mQty','mNote','mSup'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('mItem').innerHTML='<option value="">اختر الخامة...</option>';
   playSound('success');
@@ -1586,9 +1609,20 @@ function printToday(){
 // ══════════════════════════════════════════
 function editMovement(mid){
   if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
-  if(!mid||mid==='undefined'){toast('⚠️ أعد تحميل الصفحة');return;}
-  const m=movements.find(x=>x.id==mid);
-  if(!m){toast('⚠️ لم يتم إيجاد الحركة');return;}
+  const m=movements.find(x=>String(x.id)===String(mid));
+  if(!m){
+    // Try reloading movements from Supabase then retry
+    toast('⚠️ جاري البحث عن الحركة...');
+    sb.from('wh_movements').select('*').eq('id',mid).single().then(function(res){
+      if(res.data){
+        movements.unshift(res.data);
+        editMovement(mid);
+      } else {
+        toast('⚠️ لم يتم إيجاد الحركة، حاول مرة أخرى');
+      }
+    });
+    return;
+  }
   openMod('✏️ تعديل الحركة',
     '<div style="font-size:12px;color:var(--t2);margin-bottom:12px">'+( m.item_name||'')+' · '+(m.type==='in'?'إضافة':'صرف')+' · '+m.move_date+'</div>'
     +'<div class="flbl">الكمية</div><input type="number" class="fi2" id="editQty" value="'+m.qty+'" min="0" style="margin-bottom:10px"/>'
@@ -1609,7 +1643,7 @@ async function saveEditMovement(mid){
   const newSup=document.getElementById('editSup').value.trim();
   const newNote=document.getElementById('editNote').value.trim();
   if(!newQty||newQty<=0){toast('⚠️ أدخل كمية صحيحة');return;}
-  const m=movements.find(x=>x.id==mid);
+  const m=movements.find(x=>String(x.id)===String(mid));
   if(!m){toast('⚠️ لم يتم إيجاد الحركة');closeMod();return;}
   const {error}=await sb.from('wh_movements').update({qty:newQty,move_date:newDate,supplier:newSup,note:newNote}).eq('id',mid);
   if(error){toast('❌ فشل التعديل: '+error.message);return;}
@@ -1631,7 +1665,6 @@ async function saveEditMovement(mid){
 
 function deleteMovement(mid,itemName,qty){
   if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
-  if(!mid||mid==='undefined'){toast('⚠️ أعد تحميل الصفحة');return;}
   openMod('🗑 حذف حركة',
     '<div style="font-size:13px;color:var(--t2)">حذف حركة <b>'+itemName+'</b> ('+parseFloat(qty).toLocaleString()+' كجم)؟<br><span style="font-size:11px;color:var(--red);margin-top:6px;display:block">⚠️ سيتم عكس أثرها على الرصيد تلقائياً</span></div>',
     [
@@ -1643,7 +1676,7 @@ function deleteMovement(mid,itemName,qty){
 
 async function cfmDeleteMovement(mid){
   if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
-  const m=movements.find(x=>x.id==mid);
+  const m=movements.find(x=>String(x.id)===String(mid));
   if(!m){closeMod();return;}
   const {error}=await sb.from('wh_movements').delete().eq('id',mid);
   if(error){toast('❌ فشل الحذف: '+error.message);return;}
@@ -1654,7 +1687,7 @@ async function cfmDeleteMovement(mid){
   const adjusted=m.type==='in'?Math.max(0,cur-qkg):cur+qkg;
   inventory[iid][sid]=adjusted;
   await sb.from('wh_inventory').upsert({item_id:iid,store_id:sid,qty:adjusted},{onConflict:'item_id,store_id'});
-  movements=movements.filter(x=>x.id!=mid);
+  movements=movements.filter(x=>String(x.id)!==String(mid));
   closeMod();
   toast('🗑 تم حذف الحركة وعكس أثرها');
   renderHistory();renderDash();renderToday();
