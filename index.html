@@ -276,6 +276,7 @@ select.fi{appearance:none;cursor:pointer;}
 .mcard:hover{border-color:var(--border2);}
 .mbadge{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;}
 .mbadge.in{background:var(--green-dim);}
+.mbadge.transfer{background:rgba(52,152,219,.15);}
 .mbadge.out{background:var(--orange-dim);}
 .mbody{flex:1;min-width:0;}
 .mnm{font-size:12px;font-weight:700;color:var(--t1);}
@@ -294,6 +295,8 @@ select.fi{appearance:none;cursor:pointer;}
 .togbtn{flex:1;padding:10px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--t3);border:none;background:none;font-family:'Cairo',sans-serif;transition:all .2s;}
 .togbtn.ain{background:var(--green);color:white;}
 .togbtn.aout{background:var(--orange);color:white;}
+.togbtn.atr{background:#3498db;color:white;}
+.sbtn.transfer{background:#3498db;}
 .fl{display:flex;gap:8px;}
 .fi2{width:100%;padding:12px 14px;margin-bottom:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;color:var(--t1);font-family:'Cairo',sans-serif;direction:rtl;outline:none;transition:border .2s,box-shadow .2s;font-weight:500;}
 .fi2:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-dim);}
@@ -395,7 +398,10 @@ select.fi2{appearance:none;cursor:pointer;}
       <div class="fw"><div class="flbl">كلمة المرور</div><input class="fi" type="password" id="lgPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <button class="gbtn" id="lgBtn" onclick="doLogin()">دخول</button>
       <div class="err" id="errMsg">اسم المستخدم أو كلمة المرور غير صحيحة</div>
-      <p style="margin-top:14px;text-align:center;font-size:11px;color:var(--t3);letter-spacing:.5px;">تم تصميم التطبيق بواسطة خالد موسى</p>
+    </div>
+    <div style="text-align:center;margin-top:18px;font-size:11px;color:var(--t3);font-weight:500">
+      تم تصميم التطبيق بواسطة<br>
+      <b style="color:var(--gold)">خالد موسى</b>
     </div>
   </div>
 </div>
@@ -473,12 +479,15 @@ select.fi2{appearance:none;cursor:pointer;}
       <div class="fcard">
         <div class="ftitle">تسجيل حركة خامة</div>
         <div class="togrow">
-          <button class="togbtn ain" id="togIn" onclick="setMov('in')">📥 وارد — إضافة</button>
-          <button class="togbtn" id="togOut" onclick="setMov('out')">📤 صادر — صرف</button>
+          <button class="togbtn ain" id="togIn" onclick="setMov('in')">📥 وارد</button>
+          <button class="togbtn" id="togOut" onclick="setMov('out')">📤 صرف</button>
+          <button class="togbtn" id="togTr" onclick="setMov('transfer')">🔄 نقل</button>
         </div>
         <div class="flbl">الصنف</div><select class="fi2" id="mCat" onchange="fillItems()"></select>
         <div class="flbl">الخامة</div><select class="fi2" id="mItem"></select>
-        <div class="flbl">المخزن</div><select class="fi2" id="mStore"></select>
+        <div class="flbl" id="mStoreLbl">المخزن</div><select class="fi2" id="mStore"></select>
+        <div class="flbl" id="mDestLbl" style="display:none">نقل إلى مخزن</div>
+        <select class="fi2" id="mDestStore" style="display:none"></select>
         <div class="flbl">الكمية</div>
         <div class="fl" style="margin-bottom:10px">
           <input type="number" class="fi2" id="mQty" placeholder="الكمية" min="0" style="margin-bottom:0;flex:1"/>
@@ -496,9 +505,20 @@ select.fi2{appearance:none;cursor:pointer;}
 
     <!-- HISTORY -->
     <div class="scr" id="scr-history">
-      <div style="display:flex;gap:8px;margin-bottom:12px">
-        <select class="fi2" id="hType" onchange="renderHistory()" style="margin-bottom:0"><option value="">كل الحركات</option><option value="in">واردات</option><option value="out">منصرف</option></select>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <select class="fi2" id="hType" onchange="renderHistory()" style="margin-bottom:0"><option value="">كل الحركات</option><option value="in">واردات</option><option value="out">منصرف</option><option value="transfer">نقل بين المخازن</option></select>
         <select class="fi2" id="hStore" onchange="renderHistory()" style="margin-bottom:0"><option value="">كل المخازن</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+        <div style="flex:1">
+          <div class="flbl" style="margin-bottom:4px">من تاريخ</div>
+          <input type="date" class="fi2" id="hFrom" onchange="renderHistory()" style="margin-bottom:0;color-scheme:dark"/>
+        </div>
+        <div style="flex:1">
+          <div class="flbl" style="margin-bottom:4px">إلى تاريخ</div>
+          <input type="date" class="fi2" id="hTo" onchange="renderHistory()" style="margin-bottom:0;color-scheme:dark"/>
+        </div>
+        <button onclick="clearHistDates()" style="background:var(--bg3);border:1px solid var(--border3);color:var(--t3);padding:9px 12px;border-radius:var(--rs);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;margin-top:18px">✕ مسح</button>
       </div>
       <div id="histC"></div>
     </div>
@@ -1031,6 +1051,7 @@ function renderToday(){
 function mvH(m){
   const isNew=m.move_date===todayStr();
   const isAdmin=CU?.role==='admin';
+  const isTransfer=m.type==='transfer';
   const adminBtns=isAdmin
     ?('<div style="display:flex;gap:5px;margin-top:6px">'
       +'<button data-mid="'+m.id+'" onclick="editMovement(this.dataset.mid)" style="background:var(--gold-dim);border:1px solid var(--border3);color:var(--gold);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">✏️ تعديل</button>'
@@ -1038,13 +1059,20 @@ function mvH(m){
       +'</div>')
     :'';
   const supHtml=m.supplier?'<div class="msup">🏢 '+m.supplier+'</div>':'';
+  const storeMeta=isTransfer
+    ?((storeMap[m.store_id]||'')+' ← '+(m.dest_store_name||storeMap[m.dest_store_id]||''))
+    :(storeMap[m.store_id]||'');
+  const badgeIcon=isTransfer?'🔁':(m.type==='in'?'📦':'🔄');
+  const badgeClass=isTransfer?'transfer':m.type;
+  const qtyClass=isTransfer?'transfer':m.type;
+  const qtySign=isTransfer?'⇄':(m.type==='in'?'+':'-');
   return '<div class="mcard">'
-    +'<div class="mbadge '+m.type+'">'+(m.type==='in'?'📦':'🔄')+'</div>'
+    +'<div class="mbadge '+badgeClass+'">'+badgeIcon+'</div>'
     +'<div class="mbody">'
       +'<div class="mnm">'+(m.item_name||'')
         +((CU?.role==='owner'||CU?.role==='admin')&&isNew&&m.type==='in'?'<span class="ntag">جديد</span>':'')
       +'</div>'
-      +'<div class="mmeta">'+(m.cat_name||'')+' · '+(storeMap[m.store_id]||'')+' · '+m.move_date+' · '+(m.move_time||'')
+      +'<div class="mmeta">'+(m.cat_name||'')+' · '+storeMeta+' · '+m.move_date+' · '+(m.move_time||'')
         +(m.note?' · '+m.note:'')
         +(m.created_by?' · <span style="color:var(--cyan,#38c9c9);font-weight:700">👤 '+m.created_by+'</span>':'')
       +'</div>'
@@ -1052,7 +1080,7 @@ function mvH(m){
       +adminBtns
     +'</div>'
     +'<div class="mqcol">'
-      +'<div class="mq '+m.type+'">'+(m.type==='in'?'+':'-')+m.qty.toLocaleString()+'</div>'
+      +'<div class="mq '+qtyClass+'" style="'+(isTransfer?'color:#3498db':'')+'">'+qtySign+m.qty.toLocaleString()+'</div>'
       +'<div style="font-size:10px;color:var(--t3);font-weight:600">'+m.unit+'</div>'
     +'</div>'
     +'</div>';
@@ -1063,15 +1091,32 @@ function setMov(t){
   movType=t;
   document.getElementById('togIn').className='togbtn'+(t==='in'?' ain':'');
   document.getElementById('togOut').className='togbtn'+(t==='out'?' aout':'');
-  const btn=document.getElementById('subBtn');btn.className='sbtn '+t;
-  btn.textContent=t==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';
+  document.getElementById('togTr').className='togbtn'+(t==='transfer'?' atr':'');
+  const btn=document.getElementById('subBtn');
+  btn.className='sbtn '+(t==='transfer'?'transfer':t);
+  btn.textContent=t==='in'?'✓ تسجيل الإضافة':t==='out'?'✓ تسجيل الصرف':'✓ تسجيل النقل';
   document.querySelectorAll('.sup-lbl,.sup-fld').forEach(el=>el.style.display=t==='in'?'':'none');
+  const destLbl=document.getElementById('mDestLbl');
+  const destSel=document.getElementById('mDestStore');
+  const storeLbl=document.getElementById('mStoreLbl');
+  if(t==='transfer'){
+    destLbl.style.display='';destSel.style.display='';
+    storeLbl.textContent='نقل من مخزن';
+  } else {
+    destLbl.style.display='none';destSel.style.display='none';
+    storeLbl.textContent='المخزن';
+  }
 }
 function buildAddForm(){
   const cs=document.getElementById('mCat');cs.innerHTML='<option value="">اختر الصنف...</option>';
   cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;cs.appendChild(o);});
   const ss=document.getElementById('mStore');ss.innerHTML='<option value="">اختر المخزن...</option>';
   stores.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ss.appendChild(o);});
+  const ds=document.getElementById('mDestStore');
+  if(ds){
+    ds.innerHTML='<option value="">اختر المخزن الوجهة...</option>';
+    stores.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;ds.appendChild(o);});
+  }
 }
 function fillItems(){
   const id=document.getElementById('mCat').value;
@@ -1087,22 +1132,65 @@ async function submitMov(){
   const note=document.getElementById('mNote').value.trim();
   const sup=document.getElementById('mSup').value.trim();
   const selDate=document.getElementById('mDate')?.value||todayStr();
+  const isTransfer=movType==='transfer';
+  const destStoreId=isTransfer?parseInt(document.getElementById('mDestStore').value):null;
+
   if(!catId||!itemId||!storeId||!qty||qty<=0){toast('⚠️ أكمل جميع الحقول المطلوبة');return;}
+  if(isTransfer){
+    if(!destStoreId){toast('⚠️ اختر المخزن الوجهة');return;}
+    if(destStoreId===storeId){toast('⚠️ لا يمكن النقل لنفس المخزن');return;}
+  }
+
   const qkg=unit==='طن'?qty*1000:qty;
   const curQty=(inventory[itemId]||{})[storeId]||0;
-  if(movType==='out'&&curQty<qkg){toast(`❌ الكمية المطلوبة (${qty.toLocaleString()} ${unit}) أكبر من الرصيد المتاح (${curQty.toLocaleString()} كجم)`);return;}
+
+  if((movType==='out'||isTransfer)&&curQty<qkg){
+    toast(`❌ الكمية المطلوبة (${qty.toLocaleString()} ${unit}) أكبر من الرصيد المتاح (${curQty.toLocaleString()} كجم)`);
+    return;
+  }
+
   const btn=document.getElementById('subBtn');btn.disabled=true;btn.textContent='جاري الحفظ...';
-  const newQty=movType==='in'?curQty+qkg:curQty-qkg;
-  const item=items.find(i=>i.id===itemId);const store=stores.find(s=>s.id===storeId);const cat=cats.find(c=>c.id===catId);
+  const item=items.find(i=>i.id===itemId);
+  const store=stores.find(s=>s.id===storeId);
+  const cat=cats.find(c=>c.id===catId);
   const now=new Date();const timeStr=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+
+  function resetBtn(){btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':movType==='out'?'✓ تسجيل الصرف':'✓ تسجيل النقل';}
+
+  if(isTransfer){
+    const destStore=stores.find(s=>s.id===destStoreId);
+    const newSrcQty=curQty-qkg;
+    const curDestQty=(inventory[itemId]||{})[destStoreId]||0;
+    const newDestQty=curDestQty+qkg;
+    const {error:e1}=await sb.from('wh_inventory').upsert({item_id:itemId,store_id:storeId,qty:newSrcQty},{onConflict:'item_id,store_id'});
+    if(e1){toast('❌ خطأ في تحديث المخزون');resetBtn();return;}
+    const {error:e1b}=await sb.from('wh_inventory').upsert({item_id:itemId,store_id:destStoreId,qty:newDestQty},{onConflict:'item_id,store_id'});
+    if(e1b){toast('❌ خطأ في تحديث المخزون الوجهة');resetBtn();return;}
+    const {data:newMov,error:e2}=await sb.from('wh_movements').insert({type:'transfer',item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,store_name:store?.name||'',dest_store_id:destStoreId,dest_store_name:destStore?.name||'',qty,unit,note,created_by:CU?.full_name||CU?.username||'',move_date:selDate,move_time:timeStr}).select().single();
+    if(e2){toast('❌ خطأ في تسجيل حركة النقل');resetBtn();return;}
+    if(!inventory[itemId])inventory[itemId]={};
+    inventory[itemId][storeId]=newSrcQty;
+    inventory[itemId][destStoreId]=newDestQty;
+    if(newMov)movements.unshift(newMov);
+    resetBtn();
+    const md2=document.getElementById('mDate');if(md2)md2.value=todayStr();
+    ['mCat','mItem','mStore','mDestStore','mQty','mNote','mSup'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('mItem').innerHTML='<option value="">اختر الخامة...</option>';
+    playSound('success');
+    toast('✅ تم تسجيل النقل بنجاح');
+    renderDash();renderToday();
+    return;
+  }
+
+  const newQty=movType==='in'?curQty+qkg:curQty-qkg;
   const {error:e1}=await sb.from('wh_inventory').upsert({item_id:itemId,store_id:storeId,qty:newQty},{onConflict:'item_id,store_id'});
-  if(e1){toast('❌ خطأ في تحديث المخزون');btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';return;}
+  if(e1){toast('❌ خطأ في تحديث المخزون');resetBtn();return;}
   const {data:newMov,error:e2}=await sb.from('wh_movements').insert({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,store_name:store?.name||'',qty,unit,note,supplier:movType==='in'?sup:'',created_by:CU?.full_name||CU?.username||'',move_date:selDate,move_time:timeStr}).select().single();
-  if(e2){toast('❌ خطأ في تسجيل الحركة');btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';return;}
+  if(e2){toast('❌ خطأ في تسجيل الحركة');resetBtn();return;}
   if(!inventory[itemId])inventory[itemId]={};inventory[itemId][storeId]=newQty;
   if(newMov)movements.unshift(newMov);
   else movements.unshift({type:movType,item_id:itemId,item_name:item?.name||'',cat_name:cat?.name||'',store_id:storeId,qty,unit,note,supplier:movType==='in'?sup:'',created_by:CU?.full_name||CU?.username||'',move_date:selDate,move_time:timeStr});
-  btn.disabled=false;btn.textContent=movType==='in'?'✓ تسجيل الإضافة':'✓ تسجيل الصرف';
+  resetBtn();
   const md2=document.getElementById('mDate');if(md2)md2.value=todayStr();
   ['mCat','mItem','mStore','mQty','mNote','mSup'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('mItem').innerHTML='<option value="">اختر الخامة...</option>';
@@ -1117,14 +1205,25 @@ function buildHistFilter(){
   stores.forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
 }
 function renderHistory(){
-  const tf=document.getElementById('hType')?.value||'';const sf=document.getElementById('hStore')?.value||'';
+  const tf=document.getElementById('hType')?.value||'';
+  const sf=document.getElementById('hStore')?.value||'';
+  const df=document.getElementById('hFrom')?.value||'';
+  const dt=document.getElementById('hTo')?.value||'';
   let data=[...movements];
   if(tf)data=data.filter(m=>m.type===tf);
-  if(sf)data=data.filter(m=>m.store_id===parseInt(sf));
+  if(sf)data=data.filter(m=>m.store_id===parseInt(sf)||(m.type==='transfer'&&m.dest_store_id===parseInt(sf)));
+  if(df)data=data.filter(m=>m.move_date>=df);
+  if(dt)data=data.filter(m=>m.move_date<=dt);
   let h='';
   if(!data.length){h='<div class="empty"><div class="emico">📂</div><div class="emtxt">لا توجد حركات</div></div>';}
-  else{let ld='';data.forEach(m=>{if(m.move_date!==ld){ld=m.move_date;h+=`<div class="sttitle" style="margin:${h?'14px':0} 0 8px">${m.move_date}</div>`;}h+=mvH(m);});}
+  else{let ld='';data.forEach(m=>{if(m.move_date!==ld){ld=m.move_date;h+='<div class="sttitle" style="margin:'+(h?'14px':'0')+' 0 8px">'+m.move_date+'</div>';}h+=mvH(m);});}
   document.getElementById('histC').innerHTML=h;
+}
+
+function clearHistDates(){
+  document.getElementById('hFrom').value='';
+  document.getElementById('hTo').value='';
+  renderHistory();
 }
 
 // ── PROFILE / CHANGE PW ──
