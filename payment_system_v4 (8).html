@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;KRNO Pack&quot;,&quot;short_name&quot;:&quot;KRNO Pack&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%237c6ff7&quot;,&quot;theme_color&quot;:&quot;%237c6ff7&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;https://fav.farm/🏭&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/png&quot;}]}">
+<meta name="apple-mobile-web-app-title" content="KRNO Pack">
+<meta name="application-name" content="KRNO Pack">
+<meta name="theme-color" content="#7c6ff7">
+<title>KRNO Pack</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f4f5f7;
+  --surface:#ffffff;
+  --surface2:#f8f9fa;
+  --border:#e2e8f0;
+  --border2:#cbd5e1;
+  --text:#1e293b;
+  --text2:#475569;
+  --text3:#94a3b8;
+  --purple:#7c6ff7;
+  --purple-bg:rgba(124,111,247,0.1);
+  --green:#10b981;
+  --green-bg:rgba(16,185,129,0.1);
+  --red:#ef4444;
+  --red-bg:rgba(239,68,68,0.1);
+  --amber:#f59e0b;
+  --amber-bg:rgba(245,158,11,0.1);
+  --blue:#3b82f6;
+  --blue-bg:rgba(59,130,246,0.1);
+  --teal:#0d9488;
+  --teal-bg:rgba(13,148,136,0.1);
+  --orange:#f97316;
+  --orange-bg:rgba(249,115,22,0.1);
+  --pink:#ec4899;
+  --pink-bg:rgba(236,72,153,0.1);
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Segoe UI',Arial,sans-serif;font-size:14px;direction:rtl;overflow:hidden}
+#root{height:100%;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;background:var(--bg);box-shadow:0 0 20px rgba(0,0,0,0.05)}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.active{display:flex}
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:40px}
+.scroll-body::-webkit-scrollbar{width:4px}
+.scroll-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* LOGIN */
+#screen-login{align-items:center;justify-content:center;padding:24px;background:var(--surface2)}
+.login-card{width:100%;max-width:360px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px 24px;box-shadow:0 10px 25px rgba(0,0,0,0.05)}
+.login-logo{font-size:44px;text-align:center;margin-bottom:10px}
+.login-title{font-size:20px;font-weight:700;text-align:center;margin-bottom:4px;color:var(--text)}
+.login-sub{font-size:13px;color:var(--text2);text-align:center;margin-bottom:26px}
+.login-form{display:flex;flex-direction:column;gap:14px}
+.field-label{font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
+.f-input{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;width:100%;font-family:inherit;direction:ltr;text-align:left}
+.f-input:focus{border-color:var(--purple);background:var(--surface)}
+.login-btn{background:var(--purple);color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity 0.15s}
+.login-btn:disabled{opacity:0.5;cursor:not-allowed}
+.err-box{background:var(--red-bg);border:1px solid var(--red);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--red);text-align:center;display:none}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+.hdr-back{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1}
+.hdr h1{font-size:16px;font-weight:700;color:var(--text);flex:1}
+.hdr-sub{font-size:12px;color:var(--text2);margin-top:2px}
+.icon-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:13px;color:var(--text);line-height:1;display:flex;align-items:center;justify-content:center;gap:4px}
+
+/* FILTER */
+.filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px;flex-shrink:0}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:13px;outline:none;font-family:inherit;text-align:right}
+.search-input:focus{border-color:var(--purple);background:var(--surface)}
+.filter-pills{display:flex;gap:6px;margin-top:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.filter-pills::-webkit-scrollbar{display:none}
+.pill{white-space:nowrap;padding:6px 14px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.15s}
+.pill.active{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:600}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 16px;flex-shrink:0}
+.stat-card{background:var(--surface);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.02);border:1px solid var(--border)}
+.stat-num{font-size:22px;font-weight:700;line-height:1}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:5px}
+
+/* SITES ROW */
+.sites-row{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 12px;flex-shrink:0}
+.site-card{flex:1 1 calc(33.333% - 6px);min-width:100px;background:var(--surface);border-radius:12px;padding:12px 10px;text-align:center;box-shadow:0 2px 4px rgba(0,0,0,0.02);border:1px solid var(--border);cursor:pointer;transition:transform 0.1s}
+.site-card:active{transform:scale(0.97)}
+.site-card.active{border-color:var(--purple);background:var(--purple-bg)}
+.site-card-name{font-size:11px;font-weight:700;color:var(--text);white-space:normal;line-height:1.3}
+.site-card-amt{font-size:13px;font-weight:700;color:var(--purple);margin-top:4px;white-space:normal;word-break:break-word}
+.site-card-cnt{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* ITEMS TABLE (تفصيل الإجمالي) */
+.items-list{display:flex;flex-direction:column;gap:8px}
+.item-row{display:flex;gap:6px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px}
+.item-row select{flex:1.3;min-width:0}
+.item-row input.item-amt{flex:1;min-width:0;text-align:right}
+.item-amt-wrap{flex:1;display:flex;align-items:center;gap:4px}
+.item-amt-wrap input.item-amt{text-align:center;-moz-appearance:textfield}
+.item-amt-wrap input.item-amt::-webkit-outer-spin-button,
+.item-amt-wrap input.item-amt::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.amt-step-btn{flex:0 0 auto;width:30px;height:38px;border-radius:7px;border:1px solid var(--purple);background:var(--purple-bg);color:var(--purple);font-size:17px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;user-select:none}
+.amt-step-btn:active{background:var(--purple);color:#fff}
+.item-row .item-del{flex:0 0 auto;background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;padding:2px 6px}
+.item-custom-name{flex:1.3;min-width:0}
+.items-total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 4px 0;font-weight:700}
+.items-total-row .v{color:var(--purple);font-size:17px}
+.add-item-btn{width:100%;padding:9px;border-radius:8px;border:1px dashed var(--purple);background:var(--purple-bg);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+
+/* LIST */
+.req-item{background:var(--surface);margin:8px 16px;border-radius:12px;padding:16px;border:1px solid var(--border);box-shadow:0 2px 4px rgba(0,0,0,0.01);cursor:pointer;transition:transform 0.1s, background 0.1s}
+.req-item:active{background:var(--surface2);transform:scale(0.99)}
+.req-row1{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;gap:8px}
+.req-title{font-size:14px;font-weight:600;color:var(--text);flex:1;line-height:1.4}
+.badge{font-size:11px;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0;font-weight:600}
+.b-pending{background:var(--amber-bg);color:var(--amber)}
+.b-approved{background:var(--green-bg);color:var(--green)}
+.b-partial{background:var(--blue-bg);color:var(--blue)}
+.b-rejected{background:var(--red-bg);color:var(--red)}
+.b-reviewed{background:var(--teal-bg);color:var(--teal)}
+.b-needs_revision{background:var(--orange-bg);color:var(--orange)}
+.b-executed{background:var(--pink-bg);color:var(--pink)}
+.req-meta{font-size:12px;color:var(--text2);margin-bottom:4px}
+.req-submeta{font-size:11px;color:var(--purple);font-weight:500;margin-bottom:4px}
+.req-footer{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
+.req-amount{font-size:16px;font-weight:700;color:var(--text)}
+.req-date{font-size:11px;color:var(--text3)}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2);font-size:14px}
+.loading-state{text-align:center;padding:40px 20px;color:var(--purple);font-weight:600}
+
+/* workflow steps strip */
+.workflow-strip{display:flex;align-items:center;padding:10px 16px 0;gap:0;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.workflow-strip::-webkit-scrollbar{display:none}
+.wf-step{display:flex;flex-direction:column;align-items:center;min-width:64px;font-size:10px;color:var(--text3);text-align:center;gap:3px}
+.wf-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:13px;position:relative;z-index:1}
+.wf-step.done .wf-dot{border-color:var(--green);background:var(--green-bg);color:var(--green)}
+.wf-step.active-step .wf-dot{border-color:var(--purple);background:var(--purple-bg);color:var(--purple)}
+.wf-step.done .wf-lbl{color:var(--green)}
+.wf-step.active-step .wf-lbl{color:var(--purple);font-weight:600}
+.wf-step.rejected-step .wf-dot{border-color:var(--red);background:var(--red-bg);color:var(--red)}
+.wf-step.rejected-step .wf-lbl{color:var(--red)}
+.wf-line{flex:1;height:2px;background:var(--border);min-width:10px;margin-bottom:14px}
+.wf-line.done{background:var(--green)}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;left:50%;transform:translateX(-220px);width:54px;height:54px;border-radius:50%;background:var(--purple);border:none;color:#fff;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(124,111,247,0.4);z-index:40}
+@media(max-width:480px){.fab{left:20px;transform:none}}
+
+/* DETAIL */
+.detail-body{padding:16px;display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 2px 4px rgba(0,0,0,0.01);position:relative}
+.card-label{font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;border-bottom:1px solid var(--border);padding-bottom:6px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--surface2)}
+.info-row:last-child{border-bottom:none}
+.info-key{color:var(--text2);font-size:13px}
+.info-val{font-weight:600;font-size:13px;color:var(--text);text-align:left;max-width:65%;word-break:break-word}
+.status-center{text-align:center;padding:10px 0}
+.status-big{display:inline-flex;align-items:center;padding:8px 24px;border-radius:20px;font-size:14px;font-weight:700}
+
+/* INPUTS */
+.f-textarea{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;direction:rtl;font-family:inherit;resize:none;min-height:80px;width:100%;outline:none}
+.f-textarea:focus{border-color:var(--purple);background:var(--surface)}
+.f-select{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;direction:rtl;font-family:inherit;width:100%;outline:none}
+.f-field{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;direction:rtl;font-family:inherit;width:100%;outline:none;text-align:right}
+.f-field:focus{border-color:var(--purple);background:var(--surface)}
+
+/* ACTION BAR */
+.action-bar{display:flex;flex-direction:column;gap:8px;padding:14px 16px;background:var(--surface);border-top:1px solid var(--border);flex-shrink:0}
+.action-buttons-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+.btn{padding:12px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit}
+.btn-approve{background:var(--green);color:#fff}
+.btn-reject{background:var(--red);color:#fff}
+.btn-print{background:var(--purple);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-teal{background:var(--teal);color:#fff}
+.btn-orange{background:var(--orange);color:#fff}
+.btn-pink{background:var(--pink);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-full{width:100%}
+.save-note-btn{width:100%;margin-top:8px;padding:9px;border-radius:8px;border:1px solid var(--purple);background:var(--purple-bg);color:var(--purple);font-size:12px;font-weight:600;cursor:pointer}
+
+/* ADMIN PANEL */
+.user-card,.cat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin:10px 16px;box-shadow:0 2px 4px rgba(0,0,0,0.02)}
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--purple-bg);color:var(--purple);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.admin-actions-box{margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);display:flex;flex-direction:column;gap:10px}
+.edit-inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.edit-inputs-grid input{text-align:right;direction:rtl}
+.role-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.role-btn{padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:500;cursor:pointer;font-family:inherit}
+.role-btn.active{background:var(--text);color:#fff;border-color:var(--text);font-weight:600}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red);padding:6px 10px;border-radius:6px;cursor:pointer;font-family:inherit;font-size:13px}
+.add-form-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin:0 16px 14px;display:flex;flex-direction:column;gap:12px}
+
+/* TABS FOR ADMIN */
+.admin-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:10px;background:var(--surface);padding:0 16px;overflow-x:auto;scrollbar-width:none}
+.admin-tabs::-webkit-scrollbar{display:none}
+.admin-tab{flex:0 0 auto;text-align:center;padding:12px 14px;font-weight:600;font-size:12px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.admin-tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+
+/* ATTACHMENTS */
+.attach-area{border:2px dashed var(--border2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;color:var(--text2);font-size:13px;background:var(--surface2);margin-top:8px}
+.attach-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;font-size:12px;margin-top:6px;text-decoration:none}
+.attach-name{flex:1;color:var(--blue);font-weight:500}
+
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column;gap:0;position:relative}
+.tl-item{display:flex;gap:12px;padding:10px 0}
+.tl-dot{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px}
+.tl-content{flex:1;padding-bottom:10px;border-bottom:1px dashed var(--border)}
+.tl-item:last-child .tl-content{border-bottom:none}
+.tl-who{font-size:13px;font-weight:600;color:var(--text)}
+.tl-action{font-size:12px;color:var(--text2);margin-top:2px}
+.tl-time{font-size:11px;color:var(--text3);margin-top:3px}
+
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:var(--text);border-radius:10px;padding:12px 24px;font-size:13px;color:#fff;z-index:99;opacity:0;transition:opacity 0.2s;pointer-events:none;box-shadow:0 5px 15px rgba(0,0,0,0.2)}
+.toast.show{opacity:1}
+.form-group{display:flex;flex-direction:column;gap:4px}
+.form-label{font-size:12px;color:var(--text2);font-weight:600}
+</style>
+</head>
+<body>
+<div id="root">
+
+  <!-- LOGIN -->
+  <div id="screen-login" class="screen active">
+    <div class="login-card">
+      <div class="login-logo">🏭</div>
+      <div class="login-title">نظام موافقات الدفع</div>
+      <div class="login-sub">سجّل دخولك للمتابعة</div>
+      <div class="login-form">
+        <div>
+          <div class="field-label">البريد الإلكتروني</div>
+          <input class="f-input" id="login-email" type="email" placeholder="example@company.com" autocomplete="email">
+        </div>
+        <div>
+          <div class="field-label">كلمة المرور</div>
+          <input class="f-input" id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div id="login-err" class="err-box">البريد أو كلمة المرور غلط</div>
+        <button class="login-btn" id="login-btn" onclick="doLogin()">دخول</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="screen-dashboard" class="screen">
+    <div class="hdr">
+      <div style="flex:1">
+        <h1>طلبات الدفع</h1>
+        <div class="hdr-sub" id="user-info">جاري جلب البيانات...</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="icon-btn" id="admin-btn" onclick="showScreen('screen-admin')" style="display:none">⚙️ إدارة</button>
+        <button class="icon-btn" onclick="changeOwnPassword()" title="تغيير كلمة المرور">🔑</button>
+        <button class="icon-btn" onclick="doLogout()">↩</button>
+      </div>
+    </div>
+    <div class="filter-bar">
+      <input class="search-input" id="search-input" type="text" placeholder="...بحث في الطلبات بالاسم أو المستفيد" oninput="renderList()">
+      <div class="filter-pills" id="site-pills-container" style="margin-top:10px"></div>
+      <div class="filter-pills" id="filter-pills-container">
+        <button class="pill active" onclick="setFilter(this,'all')">الكل</button>
+        <button class="pill" onclick="setFilter(this,'pending')">قيد الانتظار</button>
+        <button class="pill" onclick="setFilter(this,'reviewed')">تمت المراجعة</button>
+        <button class="pill" onclick="setFilter(this,'needs_revision')">يحتاج تعديل</button>
+        <button class="pill" onclick="setFilter(this,'approved')">موافق نهائيًا</button>
+        <button class="pill" onclick="setFilter(this,'executed')">منفذ</button>
+        <button class="pill" onclick="setFilter(this,'partial')">موافق مبدئيًا</button>
+        <button class="pill" onclick="setFilter(this,'rejected')">مرفوض</button>
+      </div>
+    </div>
+    <div class="stats-row" id="stats-row" style="display:none"></div>
+    <div class="sites-row" id="sites-row" style="display:none"></div>
+    <div class="scroll-body" id="req-list"><div class="loading-state">جارٍ تحميل الطلبات...</div></div>
+    <button class="fab" id="fab-btn" onclick="openNewRequest()">+</button>
+  </div>
+
+  <!-- DETAIL -->
+  <div id="screen-detail" class="screen">
+    <div class="hdr">
+      <button class="hdr-back" onclick="showScreen('screen-dashboard')">→</button>
+      <h1 id="detail-hdr-title">تفاصيل الطلب</h1>
+    </div>
+    <div class="scroll-body"><div class="detail-body" id="detail-body"></div></div>
+    <div class="action-bar" id="action-bar"></div>
+  </div>
+
+  <!-- NEW REQUEST -->
+  <div id="screen-new" class="screen">
+    <div class="hdr">
+      <button class="hdr-back" onclick="showScreen('screen-dashboard')">→</button>
+      <h1>طلب دفع جديد</h1>
+    </div>
+    <div class="scroll-body">
+      <div class="new-form" style="padding:16px; display:flex; flex-direction:column; gap:12px">
+        <div class="card">
+          <div class="card-label">بيانات الطلب الجديد</div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div class="form-group">
+              <label class="form-label">الموقع *</label>
+              <select class="f-select" id="new-site" style="width:100%">
+                <option value="">اختر الموقع...</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">عنوان الطلب *</label><input class="f-field" id="new-title" type="text" placeholder="مثال: شراء حديد تسليح للمصنع"></div>
+            <div class="form-group"><label class="form-label">المستفيد *</label><input class="f-field" id="new-ben" type="text" placeholder="اسم الشركة أو المورد"></div>
+            <div class="form-group">
+              <label class="form-label">التصنيف</label>
+              <select class="f-select" id="new-cat" style="width:100%"></select>
+            </div>
+            <div class="form-group"><label class="form-label">ملاحظات</label><textarea class="f-textarea" id="new-notes" placeholder="تفاصيل إضافية عن الطلب..." rows="3"></textarea></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">تفصيل الإجمالي (بنود الصرف)</div>
+          <div class="items-list" id="new-items-list"></div>
+          <button class="add-item-btn" onclick="addNewItem()">+ إضافة بند</button>
+          <div class="items-total-row">
+            <span>الإجمالي</span>
+            <span class="v" id="new-items-total">0 ج.م</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-label">المرفقات والملفات</div>
+          <div class="attach-area" onclick="document.getElementById('new-file-inp').click()">
+            <div style="font-size:24px;margin-bottom:6px">📎</div>اضغط هنا لرفع فواتير وصور (PDF/Images)
+          </div>
+          <input type="file" id="new-file-inp" style="display:none" multiple accept="image/*,application/pdf" onchange="addNewFiles(this)">
+          <div id="new-attach-list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="action-bar"><button class="btn btn-approve btn-full" id="submit-btn" onclick="submitRequest()">📤 إرسال الطلب</button></div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="screen-admin" class="screen">
+    <div class="hdr">
+      <button class="hdr-back" onclick="showScreen('screen-dashboard')">→</button>
+      <h1>لوحة التحكم والإدارة</h1>
+    </div>
+    <div class="admin-tabs">
+      <div class="admin-tab active" id="tab-users" onclick="switchAdminTab('users')">👥 الأعضاء</div>
+      <div class="admin-tab" id="tab-sites" onclick="switchAdminTab('sites')">🏗 المواقع</div>
+      <div class="admin-tab" id="tab-cats" onclick="switchAdminTab('cats')">📁 التصنيفات</div>
+      <div class="admin-tab" id="tab-items" onclick="switchAdminTab('items')">🧱 بنود الصرف</div>
+      <div class="admin-tab" id="tab-invoices" onclick="switchAdminTab('invoices')">🗑 الفواتير</div>
+    </div>
+    <div class="scroll-body" id="admin-scroll-content"></div>
+  </div>
+
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const SUPA_URL = 'https://zqadcqwfcfphkhbtiqnk.supabase.co';
+const SUPA_KEY = 'sb_publishable_2QthlxhvZQdRq8665gGAWQ_rHmlLy8S';
+const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let me = null, myProfile = null;
+let allRequests = [];
+let allProfiles = [];
+let cachedCategories = ["حديد وبويات وخرسانة","صيانة وتشغيل","مشتريات ومواد","مقاولون وخدمات","أخرى"];
+let cachedItemTypes = ["خرسانة","حديد تسليح","عمالة","أوناش ومعدات","ردم وحفر","نقل وتوريد","أخرى"];
+let currentFilter = 'all';
+let currentSiteFilter = 'all';
+let newFiles = [];
+let newItems = []; // [{id, name, amount}]
+let currentReqId = null;
+let currentAdminTab = 'users';
+
+// المواقع الستة الثابتة
+// المواقع - تبدأ بالقائمة الافتراضية وتتحدث من قاعدة البيانات عند التحميل
+let SITES = ["زلط","ساسكو","حجازي","اللوتس","كرنو","الزاوية"];
+
+// ══════════════════════════════════════════════
+//  CONSTANTS
+// ══════════════════════════════════════════════
+const SL = {
+  pending:        'قيد الانتظار',
+  reviewed:       'تمت المراجعة',
+  needs_revision: 'يحتاج تعديل',
+  partial:        'موافقة مبدئية',
+  approved:       'موافق نهائيًا',
+  rejected:       'مرفوض',
+  executed:       'تم التنفيذ'
+};
+const SC = {
+  pending:'b-pending', reviewed:'b-reviewed', needs_revision:'b-needs_revision',
+  partial:'b-partial', approved:'b-approved', rejected:'b-rejected', executed:'b-executed'
+};
+const SCOL = {
+  pending:'var(--amber)', reviewed:'var(--teal)', needs_revision:'var(--orange)',
+  partial:'var(--blue)', approved:'var(--green)', rejected:'var(--red)', executed:'var(--pink)'
+};
+const SBG = {
+  pending:'var(--amber-bg)', reviewed:'var(--teal-bg)', needs_revision:'var(--orange-bg)',
+  partial:'var(--blue-bg)', approved:'var(--green-bg)', rejected:'var(--red-bg)', executed:'var(--pink-bg)'
+};
+const ROLE_MAP = {
+  employee:  'موظف',
+  auditor:   'مراجع',
+  manager:   'صاحب المصنع',
+  executor:  'منفذ',
+  admin:     'أدمن'
+};
+const ROLE_COLOR = {
+  employee:'var(--blue)', auditor:'var(--teal)', manager:'var(--green)',
+  executor:'var(--pink)', admin:'var(--purple)'
+};
+
+function esc(str){
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(iso){
+  if(!iso) return '';
+  return new Date(iso).toLocaleDateString('ar-EG',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='screen-dashboard') loadRequests();
+}
+
+// ══════════════════════════════════════════════
+//  ROLE HELPERS
+// ══════════════════════════════════════════════
+function isAdmin()    { return myProfile?.role==='admin'; }
+function isManager()  { return myProfile?.role==='manager'||myProfile?.role==='admin'; }
+function isAuditor()  { return myProfile?.role==='auditor'||myProfile?.role==='admin'; }
+function isExecutor() { return myProfile?.role==='executor'||myProfile?.role==='admin'; }
+function isEmployee() { return myProfile?.role==='employee'; }
+function canSeeAll()  { return !isEmployee(); }
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', async ()=>{
+  await loadGlobalCategories();
+  await loadGlobalItemTypes();
+  await loadGlobalSites();
+  const { data:{ session } } = await sb.auth.getSession();
+  if(session) await afterLogin(session.user);
+});
+
+async function loadGlobalSites(){
+  const { data, error } = await sb.from('sites').select('*').order('name');
+  if(!error && data && data.length>0) SITES = data.map(s=>s.name);
+}
+
+async function loadGlobalCategories(){
+  const { data, error } = await sb.from('categories').select('*').order('name');
+  if(!error && data && data.length>0) cachedCategories = data.map(c=>c.name);
+  const el = document.getElementById('new-cat');
+  if(el) el.innerHTML = cachedCategories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+}
+
+async function loadGlobalItemTypes(){
+  const { data, error } = await sb.from('item_types').select('*').order('name');
+  if(!error && data && data.length>0){
+    const fromDb = data.map(t=>t.name);
+    cachedItemTypes = [...new Set([...cachedItemTypes.filter(t=>fromDb.includes(t)), ...fromDb])];
+  }
+}
+
+// ══════════════════════════════════════════════
+//  AUTH
+// ══════════════════════════════════════════════
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+  err.style.display='none';
+  if(!email||!pass){ err.textContent='يرجى إدخال البيانات'; err.style.display='block'; return; }
+  btn.disabled=true; btn.textContent='جارٍ الدخول...';
+  const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+  if(error){
+    err.textContent='خطأ: ' + error.message;
+    err.style.display='block';
+    btn.disabled=false; btn.textContent='دخول';
+  } else {
+    await afterLogin(data.user);
+  }
+}
+
+async function afterLogin(user){
+  me = user;
+  let { data:prof } = await sb.from('profiles').select('*').eq('id',user.id).single();
+  if(!prof){
+    await sb.from('profiles').upsert({ id:user.id, email:user.email, name:user.email.split('@')[0], role:'employee' });
+    const res = await sb.from('profiles').select('*').eq('id',user.id).single();
+    prof = res.data;
+  }
+  myProfile = prof;
+  const role = prof.role || 'employee';
+  document.getElementById('user-info').textContent = (prof.name||prof.email) + ' · ' + (ROLE_MAP[role]||role);
+  document.getElementById('admin-btn').style.display = isAdmin() ? 'inline-block' : 'none';
+  document.getElementById('stats-row').style.display = canSeeAll() ? 'grid' : 'none';
+  // employee can't see FAB if executor or auditor (they can submit)
+  document.getElementById('fab-btn').style.display = (isEmployee()||isAdmin()) ? 'flex' : 'none';
+  showScreen('screen-dashboard');
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  me=null; myProfile=null; allRequests=[];
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pass').value='';
+  showScreen('screen-login');
+}
+
+// ══════════════════════════════════════════════
+//  REQUESTS LOAD
+// ══════════════════════════════════════════════
+async function loadRequests(){
+  document.getElementById('req-list').innerHTML='<div class="loading-state">جارٍ جلب البيانات...</div>';
+  const { data:profs } = await sb.from('profiles').select('id, name, email');
+  allProfiles = profs||[];
+
+  let q = sb.from('payment_requests').select('*').order('created_at',{ascending:false});
+  if(isEmployee()) q = q.eq('created_by', me.id);
+  // executor sees only approved & executed
+  if(myProfile?.role==='executor') q = q.in('status',['approved','executed']);
+
+  const { data, error } = await q;
+  if(error){ document.getElementById('req-list').innerHTML=`<div class="empty-state">خطأ: ${error.message}</div>`; return; }
+
+  const nameOf = id => { const p=allProfiles.find(x=>x.id===id); return p?(p.name||p.email):'غير معروف'; };
+  allRequests = (data||[]).map(r=>({
+    ...r,
+    creator_name:  nameOf(r.created_by),
+    approver_name: nameOf(r.approved_by),
+    reviewer_name: nameOf(r.reviewed_by),
+    executor_name: nameOf(r.executed_by)
+  }));
+  renderList();
+  renderStats();
+}
+
+// ══════════════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════════════
+function renderStats(){
+  if(!canSeeAll()) return;
+  const el = document.getElementById('stats-row');
+  const stats = [
+    { label:'انتظار', count:allRequests.filter(r=>r.status==='pending').length, color:'var(--amber)' },
+    { label:'موافق',  count:allRequests.filter(r=>r.status==='approved').length, color:'var(--green)' },
+    { label:'منفذ',   count:allRequests.filter(r=>r.status==='executed').length, color:'var(--pink)' },
+  ];
+  el.innerHTML = stats.map(s=>`<div class="stat-card" style="border-bottom:3px solid ${s.color}"><div class="stat-num" style="color:${s.color}">${s.count}</div><div class="stat-lbl">${s.label}</div></div>`).join('');
+  renderSites();
+}
+
+// إجمالي المصروف الفعلي بالموقع: موافق نهائيًا + موافق مبدئيًا + منفذ
+const SPENT_STATUSES = ['approved','partial','executed'];
+function renderSites(){
+  const row = document.getElementById('sites-row');
+  if(!canSeeAll()){ row.style.display='none'; return; }
+  row.style.display='flex';
+  const pillsEl = document.getElementById('site-pills-container');
+
+  // pill "الكل" + باقي المواقع لفلتر المواقع
+  pillsEl.innerHTML = `<button class="pill ${currentSiteFilter==='all'?'active':''}" onclick="setSiteFilter(this,'all')">كل المواقع</button>` +
+    SITES.map(s=>`<button class="pill ${currentSiteFilter===s?'active':''}" onclick="setSiteFilter(this,'${esc(s)}')">${esc(s)}</button>`).join('');
+
+  row.innerHTML = SITES.map(s=>{
+    const siteReqs = allRequests.filter(r=>r.site===s);
+    const spent = siteReqs.filter(r=>SPENT_STATUSES.includes(r.status)).reduce((sum,r)=>sum+Number(r.amount||0),0);
+    const isActive = currentSiteFilter===s;
+    return `<div class="site-card ${isActive?'active':''}" onclick="filterBySiteCard('${esc(s)}')">
+      <div class="site-card-name">🏗 ${esc(s)}</div>
+      <div class="site-card-amt">${spent.toLocaleString('ar-EG')} ج.م</div>
+      <div class="site-card-cnt">${siteReqs.length} طلب</div>
+    </div>`;
+  }).join('');
+}
+
+function setSiteFilter(el,s){
+  currentSiteFilter=s;
+  renderSites();
+  renderList();
+}
+function filterBySiteCard(s){
+  currentSiteFilter = currentSiteFilter===s ? 'all' : s;
+  renderSites();
+  renderList();
+}
+
+function setFilter(el,f){
+  document.querySelectorAll('.filter-pills .pill').forEach(p=>{ if(p.closest('#filter-pills-container')) p.classList.remove('active'); });
+  el.classList.add('active'); currentFilter=f; renderList();
+}
+
+function renderList(){
+  const search=(document.getElementById('search-input').value||'').toLowerCase();
+  const filtered = allRequests.filter(r=>{
+    const mf = currentFilter==='all' || r.status===currentFilter;
+    const msite = currentSiteFilter==='all' || r.site===currentSiteFilter;
+    const ms = !search || r.title.toLowerCase().includes(search) || (r.beneficiary||'').toLowerCase().includes(search);
+    return mf && msite && ms;
+  });
+  const el = document.getElementById('req-list');
+  if(!filtered.length){ el.innerHTML='<div class="empty-state">لا توجد طلبات مطابقة</div>'; return; }
+
+  el.innerHTML = filtered.map(r=>`
+    <div class="req-item" onclick="openDetail(${r.id})">
+      <div class="req-row1">
+        <span class="req-title">${esc(r.title)}</span>
+        <span class="badge ${SC[r.status]||'b-pending'}">${SL[r.status]||r.status}</span>
+      </div>
+      ${r.site?`<div class="req-meta">🏗 الموقع: <strong style="color:var(--purple)">${esc(r.site)}</strong></div>`:''}
+      <div class="req-meta">💼 المستفيد: <strong>${esc(r.beneficiary)}</strong></div>
+      <div class="req-meta">📁 التصنيف: <span style="color:var(--purple)">${esc(r.category||'عام')}</span></div>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:12px;color:var(--blue)">📝 رفع بواسطة: <strong>${esc(r.creator_name)}</strong></div>
+        ${r.reviewed_by?`<div style="font-size:12px;color:var(--teal)">🔍 مراجعة بواسطة: <strong>${esc(r.reviewer_name)}</strong> · <span>${r.review_status==='reviewed'?'✓ تمت المراجعة':'⚠ يحتاج تعديل'}</span></div>`:`<div style="font-size:12px;color:var(--text3)">🔍 في انتظار المراجعة</div>`}
+        ${r.approved_by?`<div style="font-size:12px;color:var(--green)">✓ موافقة بواسطة: <strong>${esc(r.approver_name)}</strong></div>`:r.reviewed_by?`<div style="font-size:12px;color:var(--text3)">✓ في انتظار الموافقة</div>`:''}
+        ${r.executed_by?`<div style="font-size:12px;color:var(--pink)">⚡ تنفيذ بواسطة: <strong>${esc(r.executor_name)}</strong></div>`:r.approved_by?`<div style="font-size:12px;color:var(--text3)">⚡ في انتظار التنفيذ</div>`:''}
+      </div>
+      <div class="req-footer">
+        <span class="req-amount">${Number(r.amount).toLocaleString('ar-EG')} ج.م</span>
+        <span class="req-date">📅 ${fmtDate(r.created_at)}</span>
+      </div>
+    </div>`).join('');
+}
+
+function buildStatusLine(r){
+  const lines=[];
+  if(r.reviewed_by && r.review_status) lines.push(`<div class="req-submeta" style="color:var(--teal)">🔍 مراجع: ${esc(r.reviewer_name)} · ${r.review_status==='reviewed'?'تمت المراجعة':'يحتاج تعديل'}</div>`);
+  if(r.approved_by && (r.status==='approved'||r.status==='executed'||r.status==='partial')) lines.push(`<div class="req-submeta" style="color:var(--green)">✓ موافقة: ${esc(r.approver_name)}</div>`);
+  if(r.executed_by) lines.push(`<div class="req-submeta" style="color:var(--pink)">⚡ منفذ: ${esc(r.executor_name)}</div>`);
+  return lines.join('');
+}
+
+// ══════════════════════════════════════════════
+//  DETAIL
+// ══════════════════════════════════════════════
+async function openDetail(id){
+  currentReqId=id;
+  const req = allRequests.find(r=>r.id===id);
+  if(!req) return;
+  document.getElementById('detail-hdr-title').textContent=`تفاصيل طلب رقم #${id}`;
+
+  const { data:atts } = await sb.from('attachments').select('*').eq('request_id',id);
+  const attachments = atts||[];
+  const { data:itemsData } = await sb.from('payment_request_items').select('*').eq('request_id',id).order('id');
+  const items = itemsData||[];
+
+  const role = myProfile?.role;
+  // المراجع يشوف أزرار المراجعة على أي طلب لسه ما اتراجعش أو محتاج تعديل
+  const canReview   = (role==='auditor'||role==='admin') && (req.status==='pending'||req.status==='needs_revision');
+  // المدير يوافق على أي حاجة مراجَعة أو مبدئية أو حتى pending مباشرة
+  const canApprove  = (role==='manager'||role==='admin') && (req.status==='reviewed'||req.status==='partial'||req.status==='pending'||req.status==='needs_revision');
+  const canExecute  = (role==='executor'||role==='admin') && req.status==='approved';
+  const canEditNote = role==='admin'||role==='manager'||role==='auditor';
+
+  // workflow steps
+  const wfHtml = buildWorkflow(req);
+
+  const itemsHtml = items.length ? `
+    <div class="card">
+      <div class="card-label">تفصيل الإجمالي (${items.length} بند)</div>
+      ${items.map(it=>`
+        <div class="info-row">
+          <span class="info-key">${esc(it.name)}</span>
+          <span class="info-val">${Number(it.amount).toLocaleString('ar-EG')} ج.م</span>
+        </div>`).join('')}
+      <div class="info-row" style="border-bottom:none;margin-top:6px">
+        <span class="info-key" style="font-weight:700">الإجمالي</span>
+        <span class="info-val" style="color:var(--purple);font-size:15px">${Number(req.amount).toLocaleString('ar-EG')} ج.م</span>
+      </div>
+    </div>` : '';
+
+  document.getElementById('detail-body').innerHTML = `
+    ${wfHtml}
+    <div class="status-center">
+      <span class="status-big" style="background:${SBG[req.status]};color:${SCOL[req.status]};border:1px solid ${SCOL[req.status]}">${SL[req.status]||req.status}</span>
+    </div>
+    <div class="card">
+      <div class="card-label">معلومات طلب الصرف</div>
+      ${req.site?ir('الموقع',`<span style="color:var(--purple);font-weight:700">🏗 ${esc(req.site)}</span>`):''}
+      ${ir('العنوان',esc(req.title))}
+      ${ir('الجهة المستفيدة',esc(req.beneficiary))}
+      ${ir('التصنيف',esc(req.category||'عام'))}
+      ${ir('تاريخ الإنشاء',fmtDate(req.created_at))}
+      ${ir('بواسطة الموظف',esc(req.creator_name))}
+      ${req.reviewed_by?ir('المراجع',`<span style="color:var(--teal);font-weight:700">${esc(req.reviewer_name)}</span>`):''}
+      ${req.reviewed_at?ir('تاريخ المراجعة',fmtDate(req.reviewed_at)):''}
+      ${req.approved_by?ir('الموافقة من',`<span style="color:var(--green);font-weight:700">${esc(req.approver_name)}</span>`):''}
+      ${req.executed_by?ir('المنفذ',`<span style="color:var(--pink);font-weight:700">${esc(req.executor_name)}</span>`):''}
+      ${req.executed_at?ir('تاريخ التنفيذ',fmtDate(req.executed_at)):''}
+      <div class="info-row" style="border-bottom:none;margin-top:10px">
+        <span class="info-key">إجمالي المبلغ</span>
+        <span style="font-weight:700;font-size:20px;color:var(--purple)">${Number(req.amount).toLocaleString('ar-EG')} ج.م</span>
+      </div>
+    </div>
+    ${itemsHtml}
+    <div class="card">
+      <div class="card-label">الملاحظات والقرارات</div>
+      <textarea class="f-textarea" id="notes-field" rows="3" ${!canEditNote?'readonly':''}>${esc(req.notes||'')}</textarea>
+      ${canEditNote?`<button class="save-note-btn" onclick="saveNotes(${id})">حفظ الملاحظات ✓</button>`:''}
+    </div>
+    ${req.review_notes?`<div class="card"><div class="card-label">ملاحظات المراجع</div><div style="font-size:13px;color:var(--teal);padding:6px 0;font-weight:600">${esc(req.review_notes)}</div></div>`:''}
+    <div class="card" id="review-action-card" style="${canReview?'':'display:none'}">
+      <div class="card-label">إجراء المراجعة</div>
+      <textarea class="f-textarea" id="review-notes-field" rows="2" placeholder="ملاحظات المراجعة (اختياري)"></textarea>
+      <div class="action-buttons-grid" style="margin-top:10px">
+        <button class="btn btn-teal" onclick="doReview(${id},'reviewed')">🔍 تمت المراجعة</button>
+        <button class="btn btn-orange" onclick="doReview(${id},'needs_revision')">✎ يحتاج تعديل</button>
+      </div>
+    </div>    <div class="card">
+      <div class="card-label">المرفقات (${attachments.length})</div>
+      ${attachments.map(a=>`
+        <a href="${a.file_url}" target="_blank" class="attach-item">
+          <span>${a.file_name.match(/\.pdf$/i)?'📄':'🖼️'}</span>
+          <span class="attach-name">${esc(a.file_name)}</span>
+          <span style="font-size:11px;color:var(--purple);flex-shrink:0;font-weight:600">فتح ↗</span>
+        </a>`).join('')}
+      <div class="attach-area" onclick="document.getElementById('detail-file').click()">
+        <div style="font-size:20px;margin-bottom:4px">📎</div>إرفاق ملف إضافي
+      </div>
+      <input type="file" id="detail-file" style="display:none" multiple accept="image/*,application/pdf" onchange="uploadDetailFiles(this,${id})">
+    </div>`;
+
+  // action bar
+  const bar = document.getElementById('action-bar');
+  let html = '';
+
+  if(canReview && canApprove){
+    // أدمن أو لو نفس الشخص عنده صلاحيتين - يظهر قسم الموافقة في الـ action bar
+    html = `
+      <div class="action-buttons-grid">
+        <button class="btn btn-approve" onclick="doApprove(${id},'approved')">✓ موافقة نهائية</button>
+        <button class="btn btn-reject"  onclick="doApprove(${id},'rejected')">✗ رفض</button>
+      </div>
+      <div class="action-buttons-grid">
+        <button class="btn btn-outline" onclick="doApprove(${id},'partial')">موافقة مبدئية</button>
+        <button class="btn btn-print"   onclick="printReq(${id})">🖨 طباعة طلب الدفع</button>
+      </div>`;
+  } else if(canReview){
+    // المراجع فقط - الأزرار موجودة في الكارد أعلاه، الـ action bar بس فيها طباعة
+    html = `<button class="btn btn-print btn-full" onclick="printReq(${id})">🖨 طباعة طلب الدفع</button>`;
+  } else if(canApprove){
+    html = `
+      <div class="action-buttons-grid">
+        <button class="btn btn-approve" onclick="doApprove(${id},'approved')">✓ موافقة نهائية</button>
+        <button class="btn btn-reject"  onclick="doApprove(${id},'rejected')">✗ رفض</button>
+      </div>
+      <div class="action-buttons-grid">
+        <button class="btn btn-outline" onclick="doApprove(${id},'partial')">موافقة مبدئية</button>
+        <button class="btn btn-print"   onclick="printReq(${id})">🖨 طباعة طلب الدفع</button>
+      </div>`;
+  } else if(canExecute){
+    html = `
+      <button class="btn btn-pink btn-full" onclick="doExecute(${id})">⚡ تم التنفيذ</button>
+      <button class="btn btn-print btn-full" onclick="printReq(${id})">🖨 طباعة طلب الدفع</button>`;
+  } else {
+    let delBtn = '';
+    if(isAdmin() && (req.status==='approved'||req.status==='rejected'||req.status==='executed')){
+      delBtn = `<button class="btn btn-reject btn-full" style="margin-bottom:4px" onclick="removeInvoiceByAdmin(${id})">🗑 حذف الفاتورة</button>`;
+    }
+    html = `${delBtn}<button class="btn btn-print btn-full" onclick="printReq(${id})">🖨 طباعة طلب الدفع</button>`;
+  }
+  bar.innerHTML = html;
+  showScreen('screen-detail');
+}
+
+function buildWorkflow(req){
+  const steps = [
+    { key:'submit',   label:'رفع',     icon:'📝', done: true,                              rejected: false },
+    { key:'review',   label:'مراجعة',  icon:'🔍', done: !!req.reviewed_by,                rejected: req.review_status==='needs_revision' },
+    { key:'approve',  label:'موافقة',  icon:'✓',  done: req.status==='approved'||req.status==='executed', rejected: req.status==='rejected' },
+    { key:'execute',  label:'تنفيذ',   icon:'⚡',  done: req.status==='executed',           rejected: false }
+  ];
+  let html = '<div style="padding:12px 16px 0"><div style="display:flex;align-items:center;gap:0">';
+  steps.forEach((s,i)=>{
+    let cls = s.rejected?'rejected-step':s.done?'done':'';
+    html += `<div class="wf-step ${cls}" style="min-width:54px">
+      <div class="wf-dot">${s.icon}</div>
+      <div class="wf-lbl">${s.label}</div>
+    </div>`;
+    if(i<steps.length-1){
+      const lineDone = steps[i+1].done && !steps[i+1].rejected;
+      html += `<div class="wf-line ${lineDone?'done':''}"></div>`;
+    }
+  });
+  html += '</div></div>';
+  return html;
+}
+
+function ir(k,v){ return `<div class="info-row"><span class="info-key">${k}</span><span class="info-val">${v}</span></div>`; }
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+async function saveNotes(id){
+  const notes = document.getElementById('notes-field').value;
+  await sb.from('payment_requests').update({ notes }).eq('id',id);
+  allRequests = allRequests.map(r=>r.id===id?{...r,notes}:r);
+  showToast('✓ تم حفظ الملاحظات');
+}
+
+async function doReview(id, reviewStatus){
+  const notesEl = document.getElementById('review-notes-field');
+  const review_notes = notesEl ? notesEl.value.trim() : '';
+  const newStatus = reviewStatus==='reviewed' ? 'reviewed' : 'needs_revision';
+  const now = new Date().toISOString();
+  const { error } = await sb.from('payment_requests').update({
+    status: newStatus,
+    review_status: reviewStatus,
+    review_notes: review_notes || null,
+    reviewed_by: me.id,
+    reviewed_at: now
+  }).eq('id',id);
+  if(error){ showToast('❌ '+error.message); return; }
+  // تحديث البيانات المحلية فوراً
+  allRequests = allRequests.map(r=>r.id===id?{...r,status:newStatus,review_status:reviewStatus,review_notes,reviewed_by:me.id,reviewed_at:now,reviewer_name:(myProfile.name||myProfile.email)}:r);
+  renderStats();
+  showToast(reviewStatus==='reviewed'?'✓ تم تسجيل المراجعة بنجاح':'⚠ تم إرسال للتعديل');
+  await openDetail(id);
+}
+
+async function doApprove(id, status){
+  const notesEl = document.getElementById('notes-field');
+  const notes = notesEl ? notesEl.value.trim() : '';
+  if(status==='rejected' && !notes){ showToast('⚠ أضف سبب الرفض في الملاحظات أولاً'); return; }
+  const now = new Date().toISOString();
+  await sb.from('payment_requests').update({ status, notes, approved_by:me.id, updated_at:now }).eq('id',id);
+  allRequests = allRequests.map(r=>r.id===id?{...r,status,notes,approved_by:me.id,approver_name:(myProfile.name||myProfile.email)}:r);
+  renderStats();
+  showToast('✓ تم تحديث حالة الطلب');
+  await openDetail(id);
+}
+
+async function doExecute(id){
+  if(!confirm('تأكيد تسجيل تنفيذ هذا الطلب؟')) return;
+  const now = new Date().toISOString();
+  await sb.from('payment_requests').update({ status:'executed', executed_by:me.id, executed_at:now }).eq('id',id);
+  allRequests = allRequests.map(r=>r.id===id?{...r,status:'executed',executed_by:me.id,executed_at:now,executor_name:(myProfile.name||myProfile.email)}:r);
+  renderStats();
+  showToast('⚡ تم تسجيل التنفيذ بنجاح');
+  await openDetail(id);
+}
+
+async function removeInvoiceByAdmin(id){
+  if(!confirm('هل أنت متأكد من حذف هذه الفاتورة بالكامل؟')) return;
+  try{
+    await sb.from('attachments').delete().eq('request_id',id);
+    await sb.from('payment_request_items').delete().eq('request_id',id);
+    const { data:deletedRows, error } = await sb.from('payment_requests').delete().eq('id',id).select();
+    if(error) throw error;
+    if(!deletedRows || deletedRows.length===0){
+      showToast('❌ لم يتم الحذف فعليًا - تحقق من صلاحيات RLS على جدول payment_requests');
+      return;
+    }
+    allRequests = allRequests.filter(r=>r.id!==id);
+    showToast('✓ تم حذف الفاتورة');
+    // البقاء في نفس الشاشة الحالية وتحديثها مباشرة بدل القفز للداشبورد
+    const adminPanelOpen = document.getElementById('screen-admin')?.classList.contains('active');
+    if(adminPanelOpen){
+      await renderAdminContent(); // يحدث تاب الفواتير نفسه فورًا
+    } else {
+      showScreen('screen-dashboard');
+      await loadRequests();
+    }
+  } catch(err){
+    showToast('❌ خطأ: '+err.message);
+  }
+}
+
+// ══════════════════════════════════════════════
+//  FILES
+// ══════════════════════════════════════════════
+async function uploadDetailFiles(input, reqId){
+  for(const file of Array.from(input.files)){
+    const ext=file.name.split('.').pop();
+    const path=`${reqId}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data:up } = await sb.storage.from('attachments').upload(path,file);
+    if(up){
+      const { data:{ publicUrl } } = sb.storage.from('attachments').getPublicUrl(path);
+      await sb.from('attachments').insert({ request_id:reqId, file_name:file.name, file_url:publicUrl });
+    }
+  }
+  input.value='';
+  showToast('✓ تم رفع المرفقات');
+  await openDetail(reqId);
+}
+
+// ══════════════════════════════════════════════
+//  NEW REQUEST
+// ══════════════════════════════════════════════
+function openNewRequest(){
+  newFiles=[];
+  newItems=[];
+  ['new-title','new-ben','new-notes'].forEach(id=>document.getElementById(id).value='');
+  const siteEl = document.getElementById('new-site');
+  siteEl.innerHTML = '<option value="">اختر الموقع...</option>' + SITES.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('');
+  document.getElementById('new-attach-list').innerHTML='';
+  document.getElementById('new-cat').innerHTML = cachedCategories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  addNewItem(); // يبدأ ببند واحد فاضي
+  showScreen('screen-new');
+}
+
+// ══════════════════════════════════════════════
+//  ITEMS (تفصيل الإجمالي)
+// ══════════════════════════════════════════════
+let itemIdCounter = 0;
+function addNewItem(){
+  newItems.push({ id:++itemIdCounter, name:cachedItemTypes[0], customName:'', amount:'' });
+  renderNewItems();
+}
+function removeNewItem(id){
+  newItems = newItems.filter(it=>it.id!==id);
+  if(!newItems.length) addNewItem();
+  else renderNewItems();
+}
+function updateNewItem(id, field, val){
+  const it = newItems.find(x=>x.id===id);
+  if(!it) return;
+  it[field]=val;
+  if(field==='name' && val!=='__custom__') it.customName='';
+  if(field==='amount' || field==='customName'){
+    // تحديث القيمة فقط بدون إعادة رسم الحقول، لتجنب فقدان التركيز أثناء الكتابة
+    if(field==='amount') updateNewItemsTotal();
+  } else {
+    renderNewItems();
+  }
+}
+function stepNewItem(id, delta){
+  const it = newItems.find(x=>x.id===id);
+  if(!it) return;
+  const current = parseFloat(it.amount) || 0;
+  it.amount = Math.max(0, current + delta);
+  renderNewItems();
+}
+function renderNewItems(){
+  const el = document.getElementById('new-items-list');
+  el.innerHTML = newItems.map(it=>`
+    <div class="item-row">
+      ${it.name==='__custom__'
+        ? `<input class="f-field item-custom-name" type="text" placeholder="اسم البند الجديد" value="${esc(it.customName)}" oninput="updateNewItem(${it.id},'customName',this.value)">`
+        : `<select class="f-select" onchange="updateNewItem(${it.id},'name',this.value)">
+            ${cachedItemTypes.map(t=>`<option value="${esc(t)}" ${it.name===t?'selected':''}>${esc(t)}</option>`).join('')}
+            <option value="__custom__" ${it.name==='__custom__'?'selected':''}>+ بند جديد...</option>
+          </select>`}
+      <div class="item-amt-wrap">
+        <button class="amt-step-btn" type="button" onclick="stepNewItem(${it.id}, 5)">+</button>
+        <input class="f-field item-amt" type="number" placeholder="المبلغ" value="${esc(it.amount)}" oninput="updateNewItem(${it.id},'amount',this.value)">
+        <button class="amt-step-btn" type="button" onclick="stepNewItem(${it.id}, -5)">−</button>
+      </div>
+      <button class="item-del" onclick="removeNewItem(${it.id})">×</button>
+    </div>`).join('');
+  updateNewItemsTotal();
+}
+function getNewItemsTotal(){
+  return newItems.reduce((s,it)=>s+(parseFloat(it.amount)||0),0);
+}
+function updateNewItemsTotal(){
+  document.getElementById('new-items-total').textContent = getNewItemsTotal().toLocaleString('ar-EG')+' ج.م';
+}
+
+function addNewFiles(input){
+  newFiles=[...newFiles,...Array.from(input.files)];
+  document.getElementById('new-attach-list').innerHTML = newFiles.map((f,i)=>`
+    <div class="attach-item">
+      <span>${f.type.includes('pdf')?'📄':'🖼️'}</span>
+      <span class="attach-name" style="color:var(--text)">${esc(f.name)}</span>
+      <button style="background:none;border:none;color:var(--red);font-size:16px;cursor:pointer" onclick="newFiles.splice(${i},1);document.getElementById('new-file-inp').dispatchEvent(new Event('change'))">×</button>
+    </div>`).join('');
+  input.value='';
+}
+
+async function submitRequest(){
+  const site  = document.getElementById('new-site').value;
+  const title = document.getElementById('new-title').value.trim();
+  const ben   = document.getElementById('new-ben').value.trim();
+  const cat   = document.getElementById('new-cat').value;
+  const notes = document.getElementById('new-notes').value.trim();
+
+  if(!site){ showToast('⚠ يرجى اختيار الموقع'); return; }
+  if(!title||!ben){ showToast('⚠ يرجى ملء الحقول الأساسية'); return; }
+
+  // تنظيف البنود
+  const items = newItems
+    .map(it=>({ name: it.name==='__custom__' ? it.customName.trim() : it.name, amount: parseFloat(it.amount) }))
+    .filter(it=>it.name && !isNaN(it.amount) && it.amount>0);
+
+  if(!items.length){ showToast('⚠ أضف بند واحد على الأقل بمبلغ صحيح'); return; }
+
+  const amt = items.reduce((s,it)=>s+it.amount,0);
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled=true; btn.textContent='جاري الحفظ...';
+
+  const { data:req, error } = await sb.from('payment_requests')
+    .insert({ title, beneficiary:ben, amount:amt, category:cat, site, notes, created_by:me.id, status:'pending' })
+    .select().single();
+  if(error){ showToast('❌ '+error.message); btn.disabled=false; btn.textContent='📤 إرسال الطلب'; return; }
+
+  if(req){
+    // حفظ بنود التفصيل
+    const rows = items.map(it=>({ request_id:req.id, name:it.name, amount:it.amount }));
+    await sb.from('payment_request_items').insert(rows);
+
+    // حفظ أي بند جديد كتصنيف بند دائم للاستخدام المستقبلي
+    const newTypeNames = items.map(it=>it.name).filter(n=>!cachedItemTypes.includes(n));
+    for(const n of [...new Set(newTypeNames)]){
+      await sb.from('item_types').insert({ name:n }).select();
+    }
+    if(newTypeNames.length) await loadGlobalItemTypes();
+  }
+
+  if(req && newFiles.length>0){
+    for(const file of newFiles){
+      const ext=file.name.split('.').pop();
+      const path=`${req.id}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { data:up } = await sb.storage.from('attachments').upload(path,file);
+      if(up){
+        const { data:{ publicUrl } } = sb.storage.from('attachments').getPublicUrl(path);
+        await sb.from('attachments').insert({ request_id:req.id, file_name:file.name, file_url:publicUrl });
+      }
+    }
+  }
+  showToast('✓ تم إرسال الطلب بنجاح');
+  showScreen('screen-dashboard');
+}
+
+// ══════════════════════════════════════════════
+//  PRINT
+// ══════════════════════════════════════════════
+async function printReq(id){
+  const req = allRequests.find(r=>r.id===id);
+  if(!req) return;
+  const { data:itemsData } = await sb.from('payment_request_items').select('*').eq('request_id',id).order('id');
+  const items = itemsData||[];
+  const itemsRowsHtml = items.length ? `
+    <tr><th colspan="2" style="background:#f0f0f0">تفصيل البنود</th></tr>
+    ${items.map(it=>`<tr><td style="width:60%">${esc(it.name)}</td><td><strong>${Number(it.amount).toLocaleString('ar-EG')} ج.م</strong></td></tr>`).join('')}
+  ` : '';
+  const pWin = window.open('','_blank');
+  pWin.document.write(`
+    <html><head><title>طلب دفع #${req.id}</title>
+    <style>body{font-family:Arial;direction:rtl;padding:40px;color:#333}.hdr{text-align:center;margin-bottom:30px;border-bottom:2px solid #333;padding-bottom:10px}
+    table{width:100%;border-collapse:collapse;margin-top:20px}table,th,td{border:1px solid #999;padding:12px;text-align:right}th{background:#eee}
+    .wf{display:flex;gap:20px;padding:16px;background:#f5f5f5;border-radius:8px;margin:20px 0}.wf-step{text-align:center;flex:1}.wf-dot{width:36px;height:36px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#e2e8f0}.wf-step.done .wf-dot{background:#d1fae5}.wf-step.done .wf-lbl{color:#10b981;font-weight:700}.wf-lbl{font-size:12px}</style></head>
+    <body><div class="hdr"><h2>مصنع كرنو للبلاستيك - طلب صرف</h2><p>رقم المعاملة: #${req.id}${req.site?' · الموقع: '+esc(req.site):''}</p></div>
+    <div class="wf">
+      <div class="wf-step done"><div class="wf-dot">📝</div><div class="wf-lbl">رفع الطلب</div><div style="font-size:11px">${esc(req.creator_name)}</div></div>
+      <div class="wf-step ${req.reviewed_by?'done':''}"><div class="wf-dot">🔍</div><div class="wf-lbl">مراجعة</div><div style="font-size:11px">${req.reviewed_by?esc(req.reviewer_name):'-'}</div></div>
+      <div class="wf-step ${req.approved_by?'done':''}"><div class="wf-dot">✓</div><div class="wf-lbl">موافقة</div><div style="font-size:11px">${req.approved_by?esc(req.approver_name):'-'}</div></div>
+      <div class="wf-step ${req.executed_by?'done':''}"><div class="wf-dot">⚡</div><div class="wf-lbl">تنفيذ</div><div style="font-size:11px">${req.executed_by?esc(req.executor_name):'-'}</div></div>
+    </div>
+    <table>
+      ${req.site?`<tr><th>الموقع</th><td><strong>🏗 ${esc(req.site)}</strong></td></tr>`:''}
+      <tr><th>العنوان</th><td>${esc(req.title)}</td></tr>
+      <tr><th>المستفيد</th><td>${esc(req.beneficiary)}</td></tr>
+      <tr><th>التصنيف</th><td>${esc(req.category||'عام')}</td></tr>
+      <tr><th>المبلغ</th><td><strong>${Number(req.amount).toLocaleString('ar-EG')} ج.م</strong></td></tr>
+      <tr><th>الحالة</th><td>${SL[req.status]||req.status}</td></tr>
+      <tr><th>الموظف</th><td>${esc(req.creator_name)}</td></tr>
+      <tr><th>المراجع</th><td>${req.reviewed_by?esc(req.reviewer_name):'—'}</td></tr>
+      <tr><th>تاريخ المراجعة</th><td>${req.reviewed_at?fmtDate(req.reviewed_at):'—'}</td></tr>
+      <tr><th>ملاحظات المراجعة</th><td>${esc(req.review_notes||'—')}</td></tr>
+      <tr><th>الموافقة من</th><td>${req.approved_by?esc(req.approver_name):'—'}</td></tr>
+      <tr><th>المنفذ</th><td>${req.executed_by?esc(req.executor_name):'—'}</td></tr>
+      <tr><th>تاريخ التنفيذ</th><td>${req.executed_at?fmtDate(req.executed_at):'—'}</td></tr>
+      <tr><th>الملاحظات</th><td>${esc(req.notes||'—')}</td></tr>
+      ${itemsRowsHtml}
+    </table>
+    <div style="margin-top:10px;font-size:12px;color:#777;text-align:left">طبع بواسطة: ${esc(myProfile.name||myProfile.email)} · ${new Date().toLocaleDateString('ar-EG')}</div>
+    <script>window.print();<\/script></body></html>`);
+  pWin.document.close();
+}
+
+// ══════════════════════════════════════════════
+//  ADMIN PANEL
+// ══════════════════════════════════════════════
+async function switchAdminTab(tab){
+  currentAdminTab=tab;
+  ['users','sites','cats','items','invoices'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+  });
+  await renderAdminContent();
+}
+
+async function renderAdminContent(){
+  const container = document.getElementById('admin-scroll-content');
+  container.innerHTML='<div class="loading-state">جاري جلب البيانات...</div>';
+
+  if(currentAdminTab==='users'){
+    const { data:profs } = await sb.from('profiles').select('*').order('email');
+    if(!profs){ container.innerHTML='<div class="empty-state">فشل جلب الأعضاء</div>'; return; }
+    allProfiles = profs;
+    container.innerHTML = `
+      <div class="add-form-box">
+        <div class="field-label" style="font-size:13px;font-weight:700;color:var(--text)">➕ إضافة عضو جديد</div>
+        <div class="form-group"><label class="form-label">البريد الإلكتروني</label><input class="f-field" id="new-user-email" type="email" placeholder="email@company.com" style="direction:ltr;text-align:left"></div>
+        <div class="form-group"><label class="form-label">كلمة المرور</label><input class="f-field" id="new-user-pass" type="password" placeholder="6 أحرف على الأقل"></div>
+        <div class="form-group">
+          <label class="form-label">الصلاحية</label>
+          <select class="f-select" id="new-user-role">
+            ${['employee','auditor','manager','executor','admin'].map(r=>`<option value="${r}">${ROLE_MAP[r]}</option>`).join('')}
+          </select>
+        </div>
+        <button class="btn btn-approve btn-full" onclick="addNewUser()">إنشاء الحساب</button>
+      </div>
+      <div style="padding:0 16px 6px;font-size:12px;color:var(--text3);font-weight:600">الأعضاء الحاليين (${profs.length})</div>
+      ${profs.map(p=>`
+      <div class="user-card">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="avatar">${(p.name||p.email)[0].toUpperCase()}</div>
+          <div style="flex:1">
+            <strong style="font-size:14px">${esc(p.name||'بدون اسم')}</strong>
+            <div style="font-size:12px;color:var(--text2)">${esc(p.email)}</div>
+          </div>
+          <span class="badge" style="background:var(--purple-bg);color:var(--purple)">${ROLE_MAP[p.role]||p.role}</span>
+        </div>
+        <div class="admin-actions-box">
+          <div class="edit-inputs-grid">
+            <input class="f-field" id="un-${p.id}" type="text" value="${esc(p.name||'')}" placeholder="الاسم">
+            <button class="btn btn-approve" style="padding:8px;font-size:12px" onclick="updateUserFields('${p.id}')">تعديل الاسم</button>
+          </div>
+          <div>
+            <div class="field-label" style="margin-bottom:6px">الصلاحية:</div>
+            <div class="role-btns">
+              ${['employee','auditor','manager','executor','admin'].map(r=>`
+                <button class="role-btn ${p.role===r?'active':''}" onclick="changeRole('${p.id}','${r}')">${ROLE_MAP[r]}</button>
+              `).join('')}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn-danger" style="font-size:12px;flex:1" onclick="changePassword('${p.id}','${esc(p.email)}')">🔑 تغيير الباسورد</button>
+            ${p.id!==me?.id?`<button class="btn-danger" style="font-size:12px;flex:1;background:var(--red);color:#fff;border-color:var(--red)" onclick="deleteUser('${p.id}','${esc(p.email)}')">🗑 حذف الحساب</button>`:''}
+          </div>
+        </div>
+      </div>`).join('')}`;
+
+  } else if(currentAdminTab==='sites'){
+    const { data:sts, error:sitesErr } = await sb.from('sites').select('*').order('name');
+    const list = sts||[];
+    container.innerHTML = `
+      <div class="add-form-box">
+        <div class="field-label">إضافة موقع جديد:</div>
+        <div style="display:flex;gap:8px">
+          <input class="f-field" id="new-site-name" type="text" placeholder="مثال: المعادي" style="flex:1">
+          <button class="btn btn-approve" onclick="addSite()">+ إضافة</button>
+        </div>
+      </div>
+      ${sitesErr?`<div style="margin:12px 16px;padding:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#b91c1c;font-size:13px">⚠ خطأ في تحميل المواقع: ${esc(sitesErr.message)}</div>`:''}
+      ${!sitesErr && !list.length?`<div style="margin:12px 16px;padding:12px;color:var(--text3);font-size:13px;text-align:center">لا توجد مواقع مسجّلة بعد</div>`:''}
+      ${list.map(s=>`
+        <div class="cat-card" style="display:flex;justify-content:space-between;align-items:center;margin:6px 16px">
+          <span style="font-weight:600;flex:1">🏗 ${esc(s.name)}</span>
+          <button class="btn-danger" onclick="deleteSite(${s.id},'${esc(s.name)}')">حذف</button>
+        </div>`).join('')}`;
+
+  } else if(currentAdminTab==='cats'){
+    const { data:cats, error:catsErr } = await sb.from('categories').select('*').order('name');
+    const list = cats||[];
+    container.innerHTML = `
+      <div class="add-form-box">
+        <div class="field-label">إضافة تصنيف جديد:</div>
+        <div style="display:flex;gap:8px">
+          <input class="f-field" id="new-cat-name" type="text" placeholder="مثال: قطاع النقل" style="flex:1">
+          <button class="btn btn-approve" onclick="addCategory()">+ إضافة</button>
+        </div>
+      </div>
+      ${catsErr?`<div style="margin:12px 16px;padding:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#b91c1c;font-size:13px">⚠ خطأ في تحميل التصنيفات: ${esc(catsErr.message)}</div>`:''}
+      ${!catsErr && !list.length?`<div style="margin:12px 16px;padding:12px;color:var(--text3);font-size:13px;text-align:center">لا توجد تصنيفات مسجّلة بعد</div>`:''}
+      ${list.map(c=>`
+        <div class="cat-card" style="display:flex;justify-content:space-between;align-items:center;margin:6px 16px">
+          <span style="font-weight:600;flex:1">📁 ${esc(c.name)}</span>
+          <button class="btn-danger" onclick="deleteCategory(${c.id},'${esc(c.name)}')">حذف</button>
+        </div>`).join('')}`;
+
+  } else if(currentAdminTab==='items'){
+    const { data:its, error:itemsErr } = await sb.from('item_types').select('*').order('name');
+    const list = its||[];
+    container.innerHTML = `
+      <div class="add-form-box">
+        <div class="field-label">إضافة بند صرف جديد:</div>
+        <div style="display:flex;gap:8px">
+          <input class="f-field" id="new-item-name" type="text" placeholder="مثال: نقل وتوريد" style="flex:1">
+          <button class="btn btn-approve" onclick="addItemType()">+ إضافة</button>
+        </div>
+      </div>
+      ${itemsErr?`<div style="margin:12px 16px;padding:12px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#b91c1c;font-size:13px">⚠ خطأ في تحميل البنود: ${esc(itemsErr.message)}</div>`:''}
+      ${!itemsErr && !list.length?`<div style="margin:12px 16px;padding:12px;color:var(--text3);font-size:13px;text-align:center">لا توجد بنود مسجّلة بعد</div>`:''}
+      ${list.map(it=>`
+        <div class="cat-card" style="display:flex;justify-content:space-between;align-items:center;margin:6px 16px">
+          <span style="font-weight:600;flex:1">🧱 ${esc(it.name)}</span>
+          <button class="btn-danger" onclick="deleteItemType(${it.id},'${esc(it.name)}')">حذف</button>
+        </div>`).join('')}`;
+
+  } else if(currentAdminTab==='invoices'){
+    const { data:reqs } = await sb.from('payment_requests').select('*').order('created_at',{ascending:false});
+    const list = reqs||[];
+    if(!list.length){ container.innerHTML='<div class="empty-state">لا توجد فواتير</div>'; return; }
+    container.innerHTML = list.map(r=>`
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin:8px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">#${r.id} · ${esc(r.title)}</div>
+            ${r.site?`<div style="font-size:11px;color:var(--purple);font-weight:600;margin-top:2px">🏗 ${esc(r.site)}</div>`:''}
+            <div style="font-size:12px;color:var(--text2);margin-top:4px">${Number(r.amount).toLocaleString('ar-EG')} ج.م · ${fmtDate(r.created_at)}</div>
+            <span class="badge ${SC[r.status]||'b-pending'}" style="margin-top:6px;display:inline-block">${SL[r.status]||r.status}</span>
+          </div>
+          <button class="btn-danger" style="font-size:12px;flex-shrink:0" onclick="removeInvoiceByAdmin(${r.id})">🗑 حذف</button>
+        </div>
+      </div>`).join('');
+  }
+}
+
+async function updateUserFields(uid){
+  const name = document.getElementById(`un-${uid}`).value.trim();
+  await sb.from('profiles').update({ name }).eq('id',uid);
+  showToast('✓ تم تحديث الاسم');
+  await renderAdminContent();
+}
+
+async function changeRole(uid, role){
+  if(uid===me.id){ showToast('⚠ لا يمكنك تغيير صلاحيتك بنفسك'); return; }
+  await sb.from('profiles').update({ role }).eq('id',uid);
+  showToast('✓ تم تغيير الصلاحية');
+  await renderAdminContent();
+}
+
+async function changePassword(uid, email){
+  const newPass = prompt(`كلمة المرور الجديدة للمستخدم ${email}:`);
+  if(!newPass||newPass.length<6){ if(newPass!==null) showToast('⚠ كلمة المرور 6 أحرف على الأقل'); return; }
+  const { error } = await sb.rpc('update_user_by_admin', {
+    target_user_id: uid,
+    new_password: newPass,
+    new_email: null,
+    new_name: null,
+    new_role: null
+  });
+  if(error) showToast('❌ '+error.message);
+  else showToast('✓ تم تغيير كلمة المرور بنجاح');
+}
+
+async function deleteUser(uid, email){
+  if(!confirm(`⚠ هل أنت متأكد من حذف حساب "${email}" نهائياً؟\nهذا الإجراء لا يمكن التراجع عنه!`)) return;
+  const { error } = await sb.rpc('delete_user_by_admin', { target_user_id: uid });
+  if(error) showToast('❌ '+error.message);
+  else {
+    showToast('✓ تم حذف الحساب بنجاح');
+    await renderAdminContent();
+  }
+}
+
+async function addNewUser(){
+  const email = document.getElementById('new-user-email').value.trim();
+  const pass  = document.getElementById('new-user-pass').value;
+  const role  = document.getElementById('new-user-role').value;
+  const name  = email.split('@')[0];
+  if(!email){ showToast('⚠ أدخل البريد الإلكتروني'); return; }
+  if(!pass||pass.length<6){ showToast('⚠ كلمة المرور 6 أحرف على الأقل'); return; }
+
+  const btn = document.querySelector('[onclick="addNewUser()"]');
+  if(btn){ btn.disabled=true; btn.textContent='جارٍ الإنشاء...'; }
+
+  try {
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
+    if(error){ showToast('❌ '+error.message); return; }
+    if(data?.user){
+      await sb.from('profiles').upsert({
+        id: data.user.id,
+        email,
+        name,
+        role
+      });
+      showToast('✓ تم إنشاء الحساب، يمكنه الدخول الآن');
+      document.getElementById('new-user-email').value='';
+      document.getElementById('new-user-pass').value='';
+      await renderAdminContent();
+    }
+  } catch(err){
+    showToast('❌ خطأ: '+err.message);
+  } finally {
+    if(btn){ btn.disabled=false; btn.textContent='إنشاء الحساب'; }
+  }
+}
+
+async function changeOwnPassword(){
+  const cur  = prompt('كلمة المرور الحالية:');
+  if(cur===null) return;
+  const newP = prompt('كلمة المرور الجديدة (6 أحرف على الأقل):');
+  if(!newP||newP.length<6){ if(newP!==null) showToast('⚠ كلمة المرور قصيرة جداً'); return; }
+  // re-auth then update
+  const { error:authErr } = await sb.auth.signInWithPassword({ email: myProfile.email, password: cur });
+  if(authErr){ showToast('❌ كلمة المرور الحالية غلط'); return; }
+  const { error } = await sb.auth.updateUser({ password: newP });
+  if(error) showToast('❌ '+error.message);
+  else showToast('✓ تم تغيير كلمة المرور بنجاح');
+}
+
+async function addSite(){
+  const name = document.getElementById('new-site-name').value.trim();
+  if(!name) return;
+  const { error } = await sb.from('sites').insert({ name });
+  if(error){ showToast('❌ فشل الإضافة: '+error.message); return; }
+  showToast('✓ تم إضافة الموقع');
+  await loadGlobalSites();
+  await renderAdminContent();
+}
+
+async function deleteSite(id, name){
+  if(!confirm(`حذف موقع: ${name}؟ (لن يؤثر على الطلبات السابقة المرتبطة به)`)) return;
+  const { error } = await sb.from('sites').delete().eq('id',id);
+  if(error){ showToast('❌ فشل الحذف: '+error.message); return; }
+  showToast('✓ تم الحذف');
+  await loadGlobalSites();
+  await renderAdminContent();
+}
+
+async function addCategory(){
+  const name = document.getElementById('new-cat-name').value.trim();
+  if(!name) return;
+  const { error } = await sb.from('categories').insert({ name });
+  if(error){ showToast('❌ فشل الإضافة: '+error.message); return; }
+  showToast('✓ تم إضافة التصنيف');
+  await loadGlobalCategories();
+  await renderAdminContent();
+}
+
+async function deleteCategory(id, name){
+  if(!confirm(`حذف تصنيف: ${name}؟`)) return;
+  const { error } = await sb.from('categories').delete().eq('id',id);
+  if(error){ showToast('❌ فشل الحذف: '+error.message); return; }
+  showToast('✓ تم الحذف');
+  await loadGlobalCategories();
+  await renderAdminContent();
+}
+
+async function addItemType(){
+  const name = document.getElementById('new-item-name').value.trim();
+  if(!name) return;
+  const { error } = await sb.from('item_types').insert({ name });
+  if(error){ showToast('❌ فشل الإضافة: '+error.message); return; }
+  showToast('✓ تم إضافة بند الصرف');
+  await loadGlobalItemTypes();
+  await renderAdminContent();
+}
+
+async function deleteItemType(id, name){
+  if(!confirm(`حذف بند الصرف: ${name}؟`)) return;
+  const { error } = await sb.from('item_types').delete().eq('id',id);
+  if(error){ showToast('❌ فشل الحذف: '+error.message); return; }
+  showToast('✓ تم الحذف');
+  await loadGlobalItemTypes();
+  await renderAdminContent();
+}
+
+// Auto-load admin panel content when shown
+document.getElementById('screen-admin').addEventListener('transitionend', ()=>{});
+window.addEventListener('load', ()=>{
+  document.getElementById('screen-admin').addEventListener('click', async ()=>{
+    if(document.getElementById('admin-scroll-content').innerHTML==='')
+      await renderAdminContent();
+  }, { once:true });
+});
+</script>
+</body>
+</html>
