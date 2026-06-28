@@ -588,6 +588,7 @@ select.fi2{appearance:none;cursor:pointer;}
         <div class="atile" onclick="ap('sessions')"><div class="atico">🕒</div><div class="atlbl">سجل الدخول</div></div>
         <div class="atile" onclick="ap('notify')"><div class="atico">🔔</div><div class="atlbl">إدارة الإشعارات</div></div>
         <div class="atile" onclick="ap('adjust')"><div class="atico">⚖️</div><div class="atlbl">تصحيح الرصيد</div></div>
+        <div class="atile" onclick="ap('histlog')"><div class="atico">📋</div><div class="atlbl">سجل تعديلات السجل</div></div>
         <div class="atile" onclick="ap('reset')"><div class="atico">🔄</div><div class="atlbl">إعادة الضبط</div></div>
       </div>
       <div class="apanel" id="panel-items">
@@ -666,6 +667,12 @@ select.fi2{appearance:none;cursor:pointer;}
         </div>
         <div class="sttitle" style="margin-top:18px">📜 سجل التصحيحات</div>
         <div id="adjustLogList"></div>
+      </div>
+      <div class="apanel" id="panel-histlog">
+        <button class="backbtn" onclick="ba()">← رجوع</button>
+        <div class="sttitle">📋 سجل تعديلات السجل</div>
+        <div class="stsub" style="margin-bottom:12px">كل عمليات التعديل والحذف التي تمت من صفحة السجل بواسطة مستخدمين غير الأدمن (أصحاب الصلاحية الخاصة)</div>
+        <div id="histEditLogList"></div>
       </div>
       <div class="apanel" id="panel-reset">
         <button class="backbtn" onclick="ba()">← رجوع</button>
@@ -1423,8 +1430,9 @@ function renderToday(){
 function mvH(m){
   const isNew=m.move_date===todayStr();
   const isAdmin=CU?.role==='admin';
+  const canEditHist=isAdmin||CU?.can_edit_history===true;
   const isTransfer=m.type==='transfer';
-  const adminBtns=isAdmin
+  const adminBtns=canEditHist
     ?('<div style="display:flex;gap:5px;margin-top:6px">'
       +'<button data-mid="'+m.id+'" onclick="editMovement(this.dataset.mid)" style="background:var(--gold-dim);border:1px solid var(--border3);color:var(--gold);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">✏️ تعديل</button>'
       +'<button data-mid="'+m.id+'" data-name="'+(m.item_name||'').replace(/"/g,'')+'" data-qty="'+m.qty+'" onclick="deleteMovement(this.dataset.mid,this.dataset.name,this.dataset.qty)" style="background:var(--red-dim);border:1px solid rgba(231,76,60,.3);color:var(--red);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">🗑 حذف</button>'
@@ -1702,6 +1710,7 @@ function ap(p){
   if(p==='sessions'){_sessTab='active';renderSessions();}
   if(p==='notify'){renderNotifyTargets();}
   if(p==='adjust'){fillAdjCatSel();renderAdjustLog();}
+  if(p==='histlog'){renderHistEditLog();}
 }
 function fillAdminCatSel(){const s=document.getElementById('aCatSel');s.innerHTML='';cats.forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.name;s.appendChild(o);});}
 function renderItemsPanel(){
@@ -1811,7 +1820,28 @@ function renderStoresMgmt(){const l=document.getElementById('storesMgmt');l.inne
 async function addStore(){const n=document.getElementById('aStoreName').value.trim();if(!n){toast('⚠️ أدخل اسم المخزن');return;}const {data,error}=await sb.from('wh_stores').insert({name:n}).select().single();if(error){toast('❌ فشل الإضافة');return;}stores.push(data);storeMap[data.id]=data.name;document.getElementById('aStoreName').value='';renderStoresMgmt();buildStoreTabs();buildAddForm();buildHistFilter();playSound('add');toast('✅ تمت إضافة المخزن');}
 function delStore(id,name){openMod('حذف المخزن',`<div style="font-size:13px;color:var(--t2)">حذف مخزن "<b>${name}</b>"؟</div>`,[{l:'إلغاء',c:'bcancel',f:'closeMod()'},{l:'حذف',c:'bdel',f:`cfmDelStore(${id})`}]);}
 async function cfmDelStore(id){const {error}=await sb.from('wh_stores').delete().eq('id',id);if(error){toast('❌ فشل الحذف');return;}stores=stores.filter(s=>s.id!==id);delete storeMap[id];closeMod();renderStoresMgmt();playSound('delete');toast('🗑 تم حذف المخزن');}
-function renderUsersList(){const l=document.getElementById('usersList');l.innerHTML='';users.forEach(u=>{const el=document.createElement('div');el.className='lia';el.innerHTML=`<div><div class="lianm">${u.full_name} <span class="brole ${rBadge(u.role)}">${rLabel(u.role)}</span></div><div class="liasub">@${u.username}</div></div><div class="liaacts"><button class="icobtn del" onclick="delUser(${u.id},'${u.full_name}')">🗑</button></div>`;l.appendChild(el);});}
+function renderUsersList(){
+  const l=document.getElementById('usersList');l.innerHTML='';
+  users.forEach(u=>{
+    const el=document.createElement('div');el.className='lia';
+    const histPermToggle=u.role==='store'
+      ?('<label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer;font-size:11px;font-weight:600;color:var(--t3)">'
+        +'<input type="checkbox" '+(u.can_edit_history?'checked':'')+' onchange="toggleCanEditHistory('+u.id+',this.checked)" style="width:15px;height:15px"/>'
+        +'⚖️ صلاحية تعديل/حذف من صفحة السجل</label>')
+      :'';
+    el.innerHTML='<div><div class="lianm">'+u.full_name+' <span class="brole '+rBadge(u.role)+'">'+rLabel(u.role)+'</span></div>'
+      +'<div class="liasub">@'+u.username+'</div>'+histPermToggle+'</div>'
+      +'<div class="liaacts"><button class="icobtn del" onclick="delUser('+u.id+',\''+u.full_name+'\')">🗑</button></div>';
+    l.appendChild(el);
+  });
+}
+async function toggleCanEditHistory(uid,val){
+  const {error}=await sb.from('wh_users').update({can_edit_history:val}).eq('id',uid);
+  if(error){toast('❌ فشل تحديث الصلاحية: '+error.message);return;}
+  const u=users.find(x=>x.id===uid);
+  if(u)u.can_edit_history=val;
+  toast(val?'✅ تم منح صلاحية تعديل السجل':'🚫 تم سحب صلاحية تعديل السجل');
+}
 
 // ══════════════════════════════════════════
 //  NOTIFY TARGETS (من يستقبل الإشعارات)
@@ -2429,7 +2459,7 @@ function printToday(){
 //  ADMIN: EDIT & DELETE MOVEMENTS
 // ══════════════════════════════════════════
 function editMovement(mid){
-  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(CU?.role!=='admin'&&CU?.can_edit_history!==true){toast('❌ غير مصرح');return;}
   const m=movements.find(x=>String(x.id)===String(mid));
   if(!m){
     // Try reloading movements from Supabase then retry
@@ -2458,7 +2488,7 @@ function editMovement(mid){
 }
 
 async function saveEditMovement(mid){
-  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(CU?.role!=='admin'&&CU?.can_edit_history!==true){toast('❌ غير مصرح');return;}
   const newQty=parseFloat(document.getElementById('editQty').value)||0;
   const newDate=document.getElementById('editDate').value||todayStr();
   const newSup=document.getElementById('editSup').value.trim();
@@ -2466,6 +2496,7 @@ async function saveEditMovement(mid){
   if(!newQty||newQty<=0){toast('⚠️ أدخل كمية صحيحة');return;}
   const m=movements.find(x=>String(x.id)===String(mid));
   if(!m){toast('⚠️ لم يتم إيجاد الحركة');closeMod();return;}
+  const oldQtySnapshot=m.qty,oldDateSnapshot=m.move_date; // للتسجيل في سجل المراقبة
   const {error}=await sb.from('wh_movements').update({qty:newQty,move_date:newDate,supplier:newSup,note:newNote}).eq('id',mid);
   if(error){toast('❌ فشل التعديل: '+error.message);return;}
   // Adjust inventory
@@ -2478,6 +2509,14 @@ async function saveEditMovement(mid){
   const finalQty=Math.max(0,adjusted);
   inventory[iid][sid]=finalQty;
   await sb.from('wh_inventory').upsert({item_id:iid,store_id:sid,qty:finalQty},{onConflict:'item_id,store_id'});
+  // تسجيل في سجل المراقبة الخاص بالأدمن — فقط إذا لم يكن المنفذ أدمن (يعني صاحب الصلاحية الخاصة)
+  if(CU?.role!=='admin'){
+    await sb.from('wh_history_edit_log').insert({
+      action:'edit',movement_id:mid,item_name:m.item_name||'',store_name:storeMap[sid]||'',
+      details:'الكمية: '+oldQtySnapshot+' ← '+newQty+' | التاريخ: '+oldDateSnapshot+' ← '+newDate,
+      performed_by:CU?.full_name||CU?.username||'',performed_by_role:CU?.role||''
+    });
+  }
   m.qty=newQty;m.move_date=newDate;m.supplier=newSup;m.note=newNote;
   closeMod();
   toast('✅ تم تعديل الحركة بنجاح');
@@ -2485,7 +2524,7 @@ async function saveEditMovement(mid){
 }
 
 function deleteMovement(mid,itemName,qty){
-  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(CU?.role!=='admin'&&CU?.can_edit_history!==true){toast('❌ غير مصرح');return;}
   openMod('🗑 حذف حركة',
     '<div style="font-size:13px;color:var(--t2)">حذف حركة <b>'+itemName+'</b> ('+parseFloat(qty).toLocaleString()+' كجم)؟<br><span style="font-size:11px;color:var(--red);margin-top:6px;display:block">⚠️ سيتم عكس أثرها على الرصيد تلقائياً</span></div>',
     [
@@ -2496,7 +2535,7 @@ function deleteMovement(mid,itemName,qty){
 }
 
 async function cfmDeleteMovement(mid){
-  if(CU?.role!=='admin'){toast('❌ غير مصرح');return;}
+  if(CU?.role!=='admin'&&CU?.can_edit_history!==true){toast('❌ غير مصرح');return;}
   const m=movements.find(x=>String(x.id)===String(mid));
   if(!m){closeMod();return;}
   const {error}=await sb.from('wh_movements').delete().eq('id',mid);
@@ -2510,10 +2549,37 @@ async function cfmDeleteMovement(mid){
   if(!inventory[iid])inventory[iid]={};
   inventory[iid][sid]=adjusted;
   await sb.from('wh_inventory').upsert({item_id:iid,store_id:sid,qty:adjusted},{onConflict:'item_id,store_id'});
+  // تسجيل في سجل المراقبة الخاص بالأدمن — فقط إذا لم يكن المنفذ أدمن (يعني صاحب الصلاحية الخاصة)
+  if(CU?.role!=='admin'){
+    await sb.from('wh_history_edit_log').insert({
+      action:'delete',movement_id:mid,item_name:m.item_name||'',store_name:storeMap[sid]||'',
+      details:'حذف حركة '+(m.type==='in'?'إضافة':'صرف')+' بكمية '+m.qty+' '+(m.unit||'كجم')+' بتاريخ '+m.move_date,
+      performed_by:CU?.full_name||CU?.username||'',performed_by_role:CU?.role||''
+    });
+  }
   movements=movements.filter(x=>String(x.id)!==String(mid));
   closeMod();
   toast('🗑 تم حذف الحركة وعكس أثرها');
   renderHistory();renderDash();renderToday();
+}
+
+async function renderHistEditLog(){
+  const l=document.getElementById('histEditLogList');
+  l.innerHTML='<div class="empty"><div class="emtxt" style="font-size:12px">جاري التحميل...</div></div>';
+  const {data,error}=await sb.from('wh_history_edit_log').select('*').order('created_at',{ascending:false}).limit(100);
+  if(error||!data||!data.length){l.innerHTML='<div class="empty"><div class="emico" style="font-size:28px">📭</div><div class="emtxt" style="font-size:12px">لا توجد عمليات مسجَّلة</div></div>';return;}
+  l.innerHTML='';
+  data.forEach(r=>{
+    const el=document.createElement('div');el.className='lia';
+    const isDel=r.action==='delete';
+    const icon=isDel?'🗑':'✏️';
+    const color=isDel?'var(--red)':'var(--gold)';
+    el.innerHTML='<div><div class="lianm">'+icon+' '+(r.item_name||'')+' — '+(r.store_name||'')+'</div>'
+      +'<div class="liasub">'+(r.details||'')+'</div>'
+      +'<div class="liasub" style="font-size:10px">بواسطة: '+(r.performed_by||'')+' ('+rLabel(r.performed_by_role)+') • '+new Date(r.created_at).toLocaleString('ar-EG')+'</div></div>'
+      +'<div style="font-weight:800;color:'+color+';font-size:18px">'+icon+'</div>';
+    l.appendChild(el);
+  });
 }
 
 // ══════════════════════════════════════════
